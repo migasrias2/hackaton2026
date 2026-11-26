@@ -63,23 +63,23 @@ export default function Card() {
         <Chip label="LinkedIn" selected={wide} onPress={() => setFormat('linkedin')} />
       </Row>
 
-      <View ref={ref} collapsable={false} style={{ borderRadius: 20, overflow: 'hidden', alignSelf: 'center', width: '100%', aspectRatio: wide ? 1.91 : 0.62 }}>
-        <LinearGradient colors={[C.blueTop, C.blueBottom]} style={{ flex: 1, padding: 18, flexDirection: wide ? 'row' : 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+      <View ref={ref} collapsable={false} style={{ borderRadius: 26, borderCurve: 'continuous', overflow: 'hidden', alignSelf: 'center', width: '100%', aspectRatio: wide ? 1.91 : 0.62 }}>
+        <LinearGradient colors={[C.mint50, C.mint300, C.teal]} style={{ flex: 1, padding: 18, flexDirection: wide ? 'row' : 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
           <View style={{ alignItems: 'center', flex: wide ? 1 : undefined }}>
             <Figure figure={figureFor(top)} size={wide ? 150 : 210} />
           </View>
           <View style={{ flex: wide ? 1 : undefined, gap: 8, alignItems: wide ? 'flex-start' : 'center', justifyContent: 'center' }}>
-            <Logo white width={70} />
-            <Text style={{ fontFamily: F.extrabold, fontSize: wide ? 22 : 26, color: C.light }}>{me.name}</Text>
-            {me.tagline ? <Text style={{ fontFamily: F.medium, fontSize: 12, color: C.light, textAlign: wide ? 'left' : 'center' }}>“{me.tagline}”</Text> : null}
+            <Logo width={70} />
+            <Text style={{ fontWeight: '800', fontSize: wide ? 22 : 26, color: C.onTeal, letterSpacing: -0.6 }}>{me.name}</Text>
+            {me.tagline ? <Text style={{ fontWeight: '500', fontSize: 13, color: C.onTeal, textAlign: wide ? 'left' : 'center' }}>“{me.tagline}”</Text> : null}
             <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: wide ? 'flex-start' : 'center' }}>
               {DIMS.map((d) => (
-                <View key={d} style={{ backgroundColor: DIM_COLOR[d], borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 }}>
-                  <Text style={{ fontFamily: F.bold, fontSize: 11, color: C.light, textTransform: 'uppercase' }}>{DIM_INFO[d].part} · {label(top[d])}</Text>
+                <View key={d} style={{ backgroundColor: DIM_COLOR[d], borderRadius: 99, paddingHorizontal: 10, paddingVertical: 5 }}>
+                  <Text style={{ fontWeight: '700', fontSize: 12, color: C.light }}>{DIM_INFO[d].part} · {label(top[d])}</Text>
                 </View>
               ))}
             </View>
-            <Text style={{ fontFamily: F.regular, fontSize: 11, color: C.light, opacity: 0.85 }}>
+            <Text style={{ fontWeight: '400', fontSize: 12, color: C.onTeal, opacity: 0.8 }}>
               {acc.length} MighTs · {circles.join(' · ')}
             </Text>
           </View>

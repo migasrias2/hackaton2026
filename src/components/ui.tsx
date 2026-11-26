@@ -1,39 +1,73 @@
-// Componentes base partilhados. Dono: Design (Pessoa 4).
-import { LinearGradient } from 'expo-linear-gradient';
+// Componentes base partilhados (estilo minimalista tipo iOS). Dono: Design (Pessoa 4).
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native';
+import { Children, ReactNode } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native';
+import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { C, F, R } from '@/theme';
+import { C, R, SHADOW } from '@/theme';
 
-type Bg = 'blue' | 'light' | 'purple';
-const BG: Record<Bg, [string, string]> = {
-  blue: [C.blueTop, C.bgLight],
-  light: [C.bgLight, C.bgLight],
-  purple: ['#F3E1F5', '#E2C3E6'],
-};
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function Screen({ children, bg = 'blue', back = true, step, footer }: {
-  children: ReactNode; bg?: Bg; back?: boolean; step?: string; footer?: ReactNode;
+export const tap = () => { if (Platform.OS !== 'web') Haptics.selectionAsync().catch(() => {}); };
+
+/** Botão com "mola" ao carregar (escala) + vibração leve. Base de tudo o que é tocável. */
+export function Pressy({ children, onPress, style, disabled, scaleTo = 0.96 }: {
+  children: ReactNode; onPress?: () => void; style?: any; disabled?: boolean; scaleTo?: number;
+}) {
+  const sc = useSharedValue(1);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: sc.value }] }));
+  return (
+    <AnimatedPressable
+      disabled={disabled}
+      onPressIn={() => { sc.value = withSpring(scaleTo, { damping: 18, stiffness: 420 }); }}
+      onPressOut={() => { sc.value = withSpring(1, { damping: 14, stiffness: 260 }); }}
+      onPress={() => { tap(); onPress?.(); }}
+      style={[style, anim]}>
+      {children}
+    </AnimatedPressable>
+  );
+}
+
+/** Texto em maiúsculas → frase normal, mantendo a marca (MighT, All MighT, PNG, LinkedIn). */
+function nice(t: string) {
+  if (t !== t.toUpperCase()) return t;
+  let s = t.toLowerCase();
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  return s
+    .replace(/\ball might\b/gi, 'All MighT')
+    .replace(/\bmight(s?)\b/gi, 'MighT$1')
+    .replace(/\bpng\b/gi, 'PNG')
+    .replace(/\blinkedin\b/gi, 'LinkedIn');
+}
+
+const enter = (i: number) => FadeInDown.delay(Math.min(i, 8) * 45).duration(420).easing(Easing.out(Easing.cubic));
+
+export function Screen({ children, back = true, step, footer }: {
+  children: ReactNode; bg?: string; back?: boolean; step?: string; footer?: ReactNode;
 }) {
   return (
-    <LinearGradient colors={BG[bg]} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <View style={s.wrap}>
           <View style={s.top}>
             {back ? (
-              <Pressable hitSlop={12} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
+              <Pressable hitSlop={14} onPress={() => { tap(); router.canGoBack() ? router.back() : router.replace('/'); }}>
                 <Text style={s.back}>‹ Voltar</Text>
               </Pressable>
             ) : <View />}
             {step ? <Text style={s.step}>{step}</Text> : null}
           </View>
-          <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">{children}</ScrollView>
-          {footer ? <View style={s.footer}>{footer}</View> : null}
+          <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            {Children.toArray(children).map((child, i) => (
+              <Animated.View key={i} entering={enter(i)}>{child}</Animated.View>
+            ))}
+          </ScrollView>
+          {footer ? <Animated.View entering={enter(3)} style={s.footer}>{footer}</Animated.View> : null}
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -50,21 +84,23 @@ export function Button({ title, onPress, variant = 'primary', disabled, style }:
   title: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'ghost'; disabled?: boolean; style?: ViewStyle;
 }) {
   return (
-    <Pressable
-      onPress={disabled ? undefined : onPress}
-      style={({ pressed }) => [s.btn, s[variant], disabled && { opacity: 0.4 }, pressed && { opacity: 0.8 }, style]}>
-      <Text style={[s.btnText, variant !== 'primary' && { color: C.plum }]}>{title}</Text>
-    </Pressable>
+    <Pressy onPress={onPress} disabled={disabled} scaleTo={variant === 'ghost' ? 0.98 : 0.96}
+      style={[s.btn, s[variant], disabled && { opacity: 0.35 }, style]}>
+      <Text style={[s.btnText, variant !== 'primary' && { color: C.tealInk }]}>{nice(title)}</Text>
+    </Pressy>
   );
 }
 
-export function Chip({ label, selected, onPress, color = C.plum }: {
+export function Chip({ label, selected, onPress, color }: {
   label: string; selected?: boolean; onPress?: () => void; color?: string;
 }) {
+  const on = selected
+    ? color ? { backgroundColor: color, borderColor: color } : { backgroundColor: C.mint100, borderColor: C.mint300 }
+    : null;
   return (
-    <Pressable onPress={onPress} style={[s.chip, selected && { backgroundColor: color, borderColor: color }]}>
-      <Text style={[s.chipText, selected && { color: C.light }]}>{label}</Text>
-    </Pressable>
+    <Pressy onPress={onPress} style={[s.chip, on]}>
+      <Text style={[s.chipText, selected && { color: color ? C.light : C.onTeal }]}>{label}</Text>
+    </Pressy>
   );
 }
 
@@ -75,38 +111,39 @@ export const Row = ({ children, style }: { children: ReactNode; style?: ViewStyl
   <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }, style]}>{children}</View>;
 
 export const Input = (props: TextInputProps) =>
-  <TextInput placeholderTextColor={C.muted} {...props} style={[s.input, props.style]} />;
+  <TextInput placeholderTextColor={C.muted} selectionColor={C.teal} {...props} style={[s.input, props.style]} />;
 
 /** Ecrã bloqueado: explica porquê e dá sempre um caminho (sem becos sem saída). */
 export function Locked({ title, text, cta, onPress }: { title: string; text: string; cta: string; onPress: () => void }) {
   return (
-    <Card style={{ alignItems: 'center', gap: 12, paddingVertical: 28 }}>
-      <Text style={{ fontSize: 36 }}>🔒</Text>
+    <Card style={{ alignItems: 'center', gap: 12, paddingVertical: 32 }}>
+      <View style={s.lock}><Text style={{ fontSize: 26 }}>🔒</Text></View>
       <H2 style={{ textAlign: 'center' }}>{title}</H2>
       <P muted style={{ textAlign: 'center' }}>{text}</P>
-      <Button title={cta} onPress={onPress} />
+      <Button title={cta} onPress={onPress} style={{ alignSelf: 'stretch' }} />
     </Card>
   );
 }
 
 const s = StyleSheet.create({
   wrap: { flex: 1, width: '100%', maxWidth: 480, alignSelf: 'center' },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10 },
-  back: { fontFamily: F.semibold, color: C.dark, fontSize: 15 },
-  step: { fontFamily: F.semibold, color: C.plum, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' },
-  content: { padding: 20, paddingTop: 4, gap: 14, paddingBottom: 40 },
-  footer: { padding: 20, paddingTop: 8, gap: 10 },
-  h1: { fontFamily: F.extrabold, fontSize: 30, color: C.dark, letterSpacing: -0.5 },
-  h2: { fontFamily: F.bold, fontSize: 20, color: C.dark },
-  caps: { fontFamily: F.semibold, fontSize: 12, color: C.dark, letterSpacing: 1.2, textTransform: 'uppercase' },
-  p: { fontFamily: F.regular, fontSize: 15, lineHeight: 21, color: C.dark },
-  btn: { height: 50, borderRadius: R.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
-  primary: { backgroundColor: C.plum },
-  secondary: { backgroundColor: C.glass, borderWidth: 1, borderColor: C.plum },
-  ghost: { backgroundColor: 'transparent' },
-  btnText: { fontFamily: F.bold, color: C.light, fontSize: 15, letterSpacing: 0.5 },
-  chip: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: R.sm, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassBorder },
-  chipText: { fontFamily: F.semibold, fontSize: 13, color: C.dark, letterSpacing: 0.6, textTransform: 'uppercase' },
-  card: { backgroundColor: C.glass, borderRadius: R.md, borderWidth: 1, borderColor: C.glassBorder, padding: 16, gap: 8 },
-  input: { height: 50, borderRadius: R.sm, backgroundColor: C.light, paddingHorizontal: 14, fontFamily: F.medium, fontSize: 16, color: C.dark },
+  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10, minHeight: 44 },
+  back: { fontWeight: '400', color: C.tealInk, fontSize: 17 },
+  step: { fontWeight: '500', color: C.muted, fontSize: 13 },
+  content: { padding: 20, paddingTop: 4, gap: 16, paddingBottom: 40 },
+  footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 6 },
+  h1: { fontWeight: '700', fontSize: 34, color: C.dark, letterSpacing: -0.8, lineHeight: 40 },
+  h2: { fontWeight: '600', fontSize: 20, color: C.dark, letterSpacing: -0.3 },
+  caps: { fontWeight: '500', fontSize: 13, color: C.muted, letterSpacing: 0.2, textTransform: 'uppercase', marginTop: 6, marginLeft: 4 },
+  p: { fontWeight: '400', fontSize: 16, lineHeight: 22, color: C.dark, letterSpacing: -0.2 },
+  btn: { height: 52, borderRadius: R.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22 },
+  primary: { backgroundColor: C.teal },
+  secondary: { backgroundColor: C.surface, ...SHADOW },
+  ghost: { backgroundColor: 'transparent', height: 44 },
+  btnText: { fontWeight: '600', color: C.onTeal, fontSize: 17, letterSpacing: -0.2 },
+  chip: { paddingVertical: 9, paddingHorizontal: 15, borderRadius: R.pill, backgroundColor: C.surface, borderWidth: 1, borderColor: C.separator },
+  chipText: { fontWeight: '500', fontSize: 15, color: C.dark, letterSpacing: -0.1 },
+  card: { backgroundColor: C.surface, borderRadius: 22, borderCurve: 'continuous', padding: 18, gap: 8, ...SHADOW },
+  input: { height: 50, borderRadius: 14, borderCurve: 'continuous', backgroundColor: C.surface, borderWidth: 1, borderColor: C.separator, paddingHorizontal: 16, fontSize: 17, color: C.dark },
+  lock: { width: 60, height: 60, borderRadius: 30, backgroundColor: C.mint100, alignItems: 'center', justifyContent: 'center' },
 });

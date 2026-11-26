@@ -27,7 +27,7 @@ export default function Inbox() {
       <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View>
           <Caps>MighTs aceites</Caps>
-          <Text style={{ fontFamily: F.extrabold, fontSize: 28, color: open ? C.confirmed : C.dark }}>
+          <Text style={{ fontWeight: '800', fontSize: 28, color: open ? C.confirmed : C.dark }}>
             {Math.min(nAcc, UNLOCK_AT)}/{UNLOCK_AT}
           </Text>
         </View>

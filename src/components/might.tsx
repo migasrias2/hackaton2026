@@ -1,13 +1,16 @@
 // Peças MighT: Figura, Logo, grelha de tags, barras de peso. Dono: Design (Pessoa 4).
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { SvgXml } from 'react-native-svg';
 
 import { DIM_INFO, DIMS, Dim, TagTriple } from '@/data/types';
 import { label, tagsOf } from '@/data/tags';
 import { FIGURES, FIGURE_BASE, FigureKey } from '@/lib/figure';
 import { pct } from '@/lib/logic';
-import { C, DIM_COLOR, F, R } from '@/theme';
+import { C, DIM_COLOR, R, SHADOW } from '@/theme';
+import { Pressy } from './ui';
 import logoBlack from './logoBlack';
 import logoWhite from './logoWhite';
 
@@ -24,7 +27,7 @@ export function TagParts({ tags, light }: { tags: TagTriple; light?: boolean }) 
   return (
     <View style={s.parts}>
       {DIMS.map((d) => (
-        <View key={d} style={[s.part, { borderColor: DIM_COLOR[d] }]}>
+        <View key={d} style={s.part}>
           <Text style={[s.partDim, { color: DIM_COLOR[d] }]}>{DIM_INFO[d].part}</Text>
           <Text style={[s.partTag, light && { color: C.light }]} numberOfLines={1}>{label(tags[d])}</Text>
         </View>
@@ -39,10 +42,10 @@ export function TagGrid({ dim, value, onChange }: { dim: Dim; value?: string; on
       {tagsOf(dim).map((t) => {
         const on = value === t.id;
         return (
-          <Pressable key={t.id} onPress={() => onChange(t.id)}
+          <Pressy key={t.id} onPress={() => onChange(t.id)}
             style={[s.cell, on && { backgroundColor: DIM_COLOR[dim], borderColor: DIM_COLOR[dim] }]}>
-            <Text style={[s.cellText, on && { color: C.light }]}>{t.label}</Text>
-          </Pressable>
+            <Text style={[s.cellText, on && { color: C.light, fontWeight: '600' }]}>{t.label}</Text>
+          </Pressy>
         );
       })}
     </View>
@@ -58,22 +61,30 @@ export function WeightBars({ dim, items, selfId }: { dim: Dim; items: { id: stri
             <Text style={s.barLabel}>{label(it.id)}{it.id === selfId ? '  · também no teu Self' : ''}</Text>
             <Text style={s.barLabel}>{pct(it.w)}</Text>
           </View>
-          <View style={s.track}><View style={[s.fill, { width: `${it.w * 100}%`, backgroundColor: DIM_COLOR[dim] }]} /></View>
+          <View style={s.track}><Bar w={it.w} color={DIM_COLOR[dim]} /></View>
         </View>
       ))}
     </View>
   );
 }
 
+/** Barra que cresce suavemente ao aparecer. */
+function Bar({ w, color }: { w: number; color: string }) {
+  const v = useSharedValue(0);
+  useEffect(() => { v.value = withDelay(150, withTiming(w * 100, { duration: 700, easing: Easing.out(Easing.cubic) })); }, [w, v]);
+  const st = useAnimatedStyle(() => ({ width: `${v.value}%` }));
+  return <Animated.View style={[s.fill, { backgroundColor: color }, st]} />;
+}
+
 const s = StyleSheet.create({
   parts: { flexDirection: 'row', gap: 8, width: '100%' },
-  part: { flex: 1, borderWidth: 1.5, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center', backgroundColor: C.glass },
-  partDim: { fontFamily: F.semibold, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
-  partTag: { fontFamily: F.bold, fontSize: 14, color: C.dark },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  cell: { width: '48%', flexGrow: 1, height: 48, borderRadius: R.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassBorder },
-  cellText: { fontFamily: F.semibold, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', color: C.dark },
-  barLabel: { fontFamily: F.medium, fontSize: 13, color: C.dark },
-  track: { height: 8, borderRadius: 4, backgroundColor: 'rgba(28,30,40,0.1)', overflow: 'hidden' },
-  fill: { height: 8, borderRadius: 4 },
+  part: { flex: 1, borderRadius: R.md, borderCurve: 'continuous', paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center', gap: 2, backgroundColor: C.surface, ...SHADOW },
+  partDim: { fontWeight: '600', fontSize: 11, letterSpacing: 0.3, textTransform: 'uppercase' },
+  partTag: { fontWeight: '600', fontSize: 15, color: C.dark, letterSpacing: -0.2 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  cell: { width: '48%', flexGrow: 1, height: 48, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.separator },
+  cellText: { fontWeight: '500', fontSize: 15, color: C.dark, letterSpacing: -0.1 },
+  barLabel: { fontWeight: '500', fontSize: 14, color: C.dark },
+  track: { height: 6, borderRadius: 3, backgroundColor: 'rgba(4,54,58,0.07)', overflow: 'hidden' },
+  fill: { height: 6, borderRadius: 3 },
 });

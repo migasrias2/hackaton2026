@@ -1,8 +1,21 @@
-// Kit de marca MighT (10. Visual identity/Colors/1. COLOR GUIDE.jpg)
+// Estilo minimalista (tipo iOS). Cores da marca MighT mantidas como acentos.
 export const C = {
-  dark: '#1C1E28',
+  // Paleta (Color Hunt): #EBFFFA · #C6FCE5 · #6EF3D6 · #0DCEDA
+  mint50: '#EBFFFA',
+  mint100: '#C6FCE5',
+  mint300: '#6EF3D6',
+  teal: '#0DCEDA',      // botão principal (texto escuro por cima)
+  tealInk: '#087F87',   // teal escuro para texto/acentos legíveis em branco
+  onTeal: '#04363A',    // texto sobre teal
+  bg: '#EBFFFA',        // fundo
+  surface: '#FFFFFF',   // cartões
+  dark: '#1D1D1F',      // texto principal / botão principal
   light: '#FFFFFF',
-  plum: '#753065', // botões, texto secundário
+  muted: '#8E8E93',     // texto secundário
+  separator: 'rgba(4,54,58,0.08)',
+  fill: '#FFFFFF', // chips / inputs
+  // marca
+  plum: '#087F87',      // acento (= tealInk; nome antigo mantido para os ecrãs)
   darkBlue: '#144B86',
   lightBlue: '#358EC0',
   confirmed: '#3D9061',
@@ -16,9 +29,8 @@ export const C = {
   blueTop: '#D1EAFF',
   blueBottom: '#023460',
   bgLight: '#A9C6DE',
-  glass: 'rgba(255,255,255,0.55)',
-  glassBorder: 'rgba(255,255,255,0.8)',
-  muted: '#5B6070',
+  glass: '#FFFFFF',
+  glassBorder: 'transparent',
 };
 
 // Cor por dimensão (Cabeça · Braço · Mão)
@@ -28,12 +40,14 @@ export const DIM_COLOR = {
   caracter: C.confirmed,
 } as const;
 
-export const F = {
-  regular: 'Mona-Regular',
-  medium: 'Mona-Medium',
-  semibold: 'Mona-SemiBold',
-  bold: 'Mona-Bold',
-  extrabold: 'Mona-ExtraBold',
-};
+// Tipo de letra do sistema (SF Pro no iPhone/Mac). Só pesos.
+export const W = { regular: '400', medium: '500', semibold: '600', bold: '700', heavy: '800' } as const;
+/** @deprecated usar W (fonte do sistema) */
+export const F = { regular: undefined, medium: undefined, semibold: undefined, bold: undefined, extrabold: undefined };
 
-export const R = { sm: 10, md: 16, lg: 24, pill: 999 };
+export const R = { sm: 12, md: 18, lg: 26, pill: 999 };
+
+// Sombra suave tipo iOS
+export const SHADOW = {
+  shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2,
+} as const;

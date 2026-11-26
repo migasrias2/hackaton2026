@@ -44,13 +44,13 @@ export default function Roles() {
       <H1>O teu próximo passo</H1>
       <P muted>São hipóteses para explorar, não veredictos.</P>
 
-      <Card style={{ borderColor: C.plum, borderWidth: 2 }}>
+      <Card style={{ borderColor: C.mint300, borderWidth: 1.5 }}>
         <Caps style={{ color: C.plum }}>Percurso sugerido</Caps>
         <Row style={{ alignItems: 'stretch', flexWrap: 'nowrap' }}>
           {[['Agora', best.r.title], ['Próximo', best.r.next], ['Desafio', best.r.challenge]].map(([k, v], i) => (
             <View key={k} style={{ flex: 1, gap: 4 }}>
-              <Text style={{ fontFamily: F.semibold, fontSize: 11, color: C.muted, textTransform: 'uppercase' }}>{i ? '→ ' : ''}{k}</Text>
-              <Text style={{ fontFamily: F.bold, fontSize: 14, color: C.dark }}>{v}</Text>
+              <Text style={{ fontWeight: '600', fontSize: 11, color: C.muted, textTransform: 'uppercase' }}>{i ? '→ ' : ''}{k}</Text>
+              <Text style={{ fontWeight: '700', fontSize: 14, color: C.dark }}>{v}</Text>
             </View>
           ))}
         </Row>
@@ -62,7 +62,7 @@ export default function Roles() {
         <Card key={r.id}>
           <Row style={{ justifyContent: 'space-between' }}>
             <H2 style={{ flex: 1 }}>{r.title}</H2>
-            <Text style={{ fontFamily: F.extrabold, fontSize: 20, color: C.plum }}>{pct(fit)}</Text>
+            <Text style={{ fontWeight: '800', fontSize: 20, color: C.plum }}>{pct(fit)}</Text>
           </Row>
           <P muted>{r.blurb}{n ? ` · ${n} das 5 pessoas mais parecidas contigo ${n === 1 ? 'faz' : 'fazem'} isto.` : ''}</P>
           <P>{whyFits(w, r)}</P>
