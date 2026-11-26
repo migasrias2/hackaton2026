@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { Figure, TagGrid, TagParts } from '@/components/might';
-import { Button, Caps, H1, Input, P, Screen } from '@/components/ui';
+import { Button, Caps, H1, Input, P, Screen, Steps } from '@/components/ui';
 import { DIM_INFO, DIMS, TagTriple } from '@/data/types';
 import { figureFor } from '@/lib/figure';
 import { useMight } from '@/store/useMight';
@@ -38,6 +38,7 @@ export default function Create() {
   if (phase === 'name') {
     return (
       <Screen step="Passo 1 de 6" footer={<Button title="CONTINUAR" disabled={!name.trim()} onPress={() => setPhase(0)} />}>
+        <Steps n={4} at={0} />
         <H1>Como te chamas?</H1>
         <P muted>Só o primeiro nome. Ninguém vê o teu MighT sem o teu consentimento.</P>
         <Input value={name} onChangeText={setName} placeholder="O teu primeiro nome" autoFocus
@@ -50,7 +51,7 @@ export default function Create() {
     return (
       <Screen back={false}>
         <View style={{ alignItems: 'center', gap: 16, paddingTop: 80 }}>
-          <ActivityIndicator size="large" color={C.plum} />
+          <ActivityIndicator size="large" color={C.tealInk} />
           <H1 style={{ textAlign: 'center', fontSize: 24 }}>A IA está a desenhar o teu MighT…</H1>
         </View>
       </Screen>
@@ -82,8 +83,9 @@ export default function Create() {
   const info = DIM_INFO[dim];
   const next = () => (i < 2 ? setPhase((i + 1) as Phase) : setPhase('loading'));
   return (
-    <Screen bg="light" step={`Passo 1 de 6 · ${i + 1}/3`}
+    <Screen bg="light" step={`Passo 1 de 6 · ${i + 2}/4`} onBack={() => setPhase(i === 0 ? 'name' : ((i - 1) as Phase))}
       footer={<Button title={i < 2 ? 'SEGUINTE' : 'CRIAR O MEU MIGHT'} disabled={!tags[dim]} onPress={next} />}>
+      <Steps n={4} at={i + 1} />
       <Caps>{info.part} · {info.label}</Caps>
       <H1 style={{ fontSize: 24 }}>{SELF_Q[dim]}</H1>
       <P muted>{info.hint}</P>

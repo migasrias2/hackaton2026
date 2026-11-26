@@ -45,13 +45,13 @@ export default function Discover() {
       </Row>
       {ranked.slice(0, 10).map(({ p, sim, common, diff }, i) => (
         <Card key={p.id} style={i === 0 ? { borderColor: C.mint300, borderWidth: 1.5 } : undefined}>
-          {i === 0 ? <Caps style={{ color: C.plum }}>A pessoa mais parecida contigo</Caps> : null}
+          {i === 0 ? <Caps style={{ color: C.tealInk }}>A pessoa mais parecida contigo</Caps> : null}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
               <H2>{p.name}</H2>
               <P muted>{ROLE_BY_ID[p.roleId]?.title}</P>
             </View>
-            <Text style={{ fontWeight: '800', fontSize: 26, color: C.plum }}>{pct(sim)}</Text>
+            <Text style={{ fontWeight: '800', fontSize: 26, color: C.tealInk }}>{pct(sim)}</Text>
           </View>
           {common.length ? <P>Em comum: {common.slice(0, 3).map((c) => label(c.id)).join(', ')}</P> : <P muted>Sem tags em comum.</P>}
           {diff ? <P muted>Maior diferença: {label(diff.id)} ({diff.mine ? 'mais em ti' : `mais em ${p.name.split(' ')[0]}`})</P> : null}

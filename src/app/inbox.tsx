@@ -36,7 +36,7 @@ export default function Inbox() {
       <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View>
           <Caps>MighTs aceites</Caps>
-          <Text style={{ fontWeight: '800', fontSize: 28, color: open ? C.confirmed : C.dark }}>
+          <Text style={{ fontWeight: '800', fontSize: 28, color: open ? C.tealInk : C.dark }}>
             {Math.min(nAcc, UNLOCK_AT)}/{UNLOCK_AT}
           </Text>
         </View>
@@ -48,7 +48,7 @@ export default function Inbox() {
         <Card key={m.id} style={{ gap: 10 }}>
           <Row style={{ justifyContent: 'space-between' }}>
             <H2>{m.fromName}</H2>
-            <Caps style={{ color: C.plum }}>{CIRCLE_LABEL[m.circle]}</Caps>
+            <Caps style={{ color: C.tealInk }}>{CIRCLE_LABEL[m.circle]}</Caps>
           </Row>
           <TagParts tags={m.tags} />
           <Row>
@@ -96,7 +96,7 @@ function PostCard({ p }: { p: Post }) {
         </View>
       </View>
       {p.note ? <P>{p.note}</P> : null}
-      {!mine ? <Button title="Manda-lhe um MighT" variant="secondary" onPress={() => router.push('/send')} /> : null}
+      {!mine ? <Button title="Manda-lhe um MighT" variant="secondary" onPress={() => router.push({ pathname: '/send', params: { to: p.personId, name: p.name } })} /> : null}
     </Card>
   );
 }

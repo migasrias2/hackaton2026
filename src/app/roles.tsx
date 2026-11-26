@@ -45,7 +45,7 @@ export default function Roles() {
       <P muted>São hipóteses para explorar, não veredictos.</P>
 
       <Card style={{ borderColor: C.mint300, borderWidth: 1.5 }}>
-        <Caps style={{ color: C.plum }}>Percurso sugerido</Caps>
+        <Caps style={{ color: C.tealInk }}>Percurso sugerido</Caps>
         <Row style={{ alignItems: 'stretch', flexWrap: 'nowrap' }}>
           {[['Agora', best.r.title], ['Próximo', best.r.next], ['Desafio', best.r.challenge]].map(([k, v], i) => (
             <View key={k} style={{ flex: 1, gap: 4 }}>
@@ -62,7 +62,7 @@ export default function Roles() {
         <Card key={r.id}>
           <Row style={{ justifyContent: 'space-between' }}>
             <H2 style={{ flex: 1 }}>{r.title}</H2>
-            <Text style={{ fontWeight: '800', fontSize: 20, color: C.plum }}>{pct(fit)}</Text>
+            <Text style={{ fontWeight: '800', fontSize: 20, color: C.tealInk }}>{pct(fit)}</Text>
           </Row>
           <P muted>{r.blurb}{n ? ` · ${n} das 5 pessoas mais parecidas contigo ${n === 1 ? 'faz' : 'fazem'} isto.` : ''}</P>
           <P>{whyFits(w, r)}</P>

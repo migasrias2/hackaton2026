@@ -45,8 +45,8 @@ function nice(t: string) {
 
 const enter = (i: number) => FadeIn.delay(Math.min(i, 6) * 25).duration(260).easing(Easing.out(Easing.quad));
 
-export function Screen({ children, back = true, step, footer }: {
-  children: ReactNode; bg?: string; back?: boolean; step?: string; footer?: ReactNode;
+export function Screen({ children, back = true, step, footer, onBack }: {
+  children: ReactNode; bg?: string; back?: boolean; step?: string; footer?: ReactNode; onBack?: () => void;
 }) {
   const bar = useTabBarVisible();
   const path = usePathname();
@@ -58,7 +58,7 @@ export function Screen({ children, back = true, step, footer }: {
         <View style={s.wrap}>
           <View style={s.top}>
             {back ? (
-              <Pressable hitSlop={14} onPress={() => { tap(); router.canGoBack() ? router.back() : router.replace('/'); }}>
+              <Pressable hitSlop={14} onPress={() => { tap(); if (onBack) onBack(); else if (router.canGoBack()) router.back(); else router.replace('/'); }}>
                 <Text style={s.back}>‹ Voltar</Text>
               </Pressable>
             ) : <View />}
@@ -152,3 +152,14 @@ const s = StyleSheet.create({
   input: { height: 50, borderRadius: 14, borderCurve: 'continuous', backgroundColor: C.surface, borderWidth: 1, borderColor: C.separator, paddingHorizontal: 16, fontSize: 17, color: C.dark },
   lock: { width: 60, height: 60, borderRadius: 30, backgroundColor: C.mint100, alignItems: 'center', justifyContent: 'center' },
 });
+
+/** Barra de passos do assistente (segmentos teal preenchidos até ao passo atual). */
+export function Steps({ n, at }: { n: number; at: number }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 6 }}>
+      {Array.from({ length: n }, (_, i) => (
+        <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= at ? C.teal : C.mint100 }} />
+      ))}
+    </View>
+  );
+}

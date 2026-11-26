@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Share, View } from 'react-native';
 
-import { Button, Caps, Card, Chip, H1, Input, Locked, P, Row, Screen } from '@/components/ui';
+import { Button, Card, Chip, H1, Input, Locked, P, Row, Screen, Steps } from '@/components/ui';
 import { CIRCLE_LABEL, CIRCLES, Circle } from '@/data/types';
 import { sent } from '@/lib/logic';
 import { useMight } from '@/store/useMight';
@@ -15,6 +15,7 @@ export default function Ask() {
   const [name, setName] = useState('');
   const [circle, setCircle] = useState<Circle | null>(null);
   const [link, setLink] = useState<string | null>(null);
+  const [step, setStep] = useState(0);
 
   if (!sent(mights).length) {
     return (
@@ -41,14 +42,24 @@ export default function Ask() {
     );
   }
 
+  if (step === 0) {
+    return (
+      <Screen step="Passo 2 de 6 · Pede · 1/2"
+        footer={<Button title="SEGUINTE" disabled={!name.trim()} onPress={() => setStep(1)} />}>
+        <Steps n={2} at={0} />
+        <H1>A quem pedes?</H1>
+        <P muted>Impaciente? Pede a quem te conhece melhor. A pessoa recebe um link e não precisa de criar conta.</P>
+        <Input value={name} onChangeText={setName} placeholder="Primeiro nome" autoFocus
+          returnKeyType="next" onSubmitEditing={() => name.trim() && setStep(1)} />
+      </Screen>
+    );
+  }
+
   return (
-    <Screen step="Passo 2 de 6 · Pede"
-      footer={<Button title="CRIAR PEDIDO" disabled={!name.trim() || !circle} onPress={() => setLink(ask(name.trim(), circle!))} />}>
-      <H1>Pede MighT</H1>
-      <P muted>Impaciente? Pede a quem te conhece melhor. A pessoa recebe um link e não precisa de criar conta.</P>
-      <Caps>A quem pedes?</Caps>
-      <Input value={name} onChangeText={setName} placeholder="Primeiro nome" />
-      <Caps>De que círculo?</Caps>
+    <Screen step="Passo 2 de 6 · Pede · 2/2" onBack={() => setStep(0)}
+      footer={<Button title="CRIAR PEDIDO" disabled={!circle} onPress={() => setLink(ask(name.trim(), circle!))} />}>
+      <Steps n={2} at={1} />
+      <H1>De onde conheces {name.trim()}?</H1>
       <Row>{CIRCLES.map((c) => <Chip key={c} label={CIRCLE_LABEL[c]} selected={circle === c} onPress={() => setCircle(c)} />)}</Row>
     </Screen>
   );
