@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { PEOPLE, randomTriple } from '@/data/seed';
 import { CIRCLES, Circle, Me, Might, Post, TagTriple } from '@/data/types';
+import { Answers, randomAnswers } from '@/data/profile';
 import { figureFor, taglineFor } from '@/lib/figure';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -15,8 +16,8 @@ type State = {
   mights: Might[];
   startedAt: number | null;
   startTimer: () => void;
-  createSelf: (name: string, tags: TagTriple) => void;
-  send: (to: { id: string; name: string }, circle: Circle, tags: TagTriple) => void;
+  createSelf: (name: string, tags: TagTriple, answers?: Answers) => void;
+  send: (to: { id: string; name: string }, circle: Circle, tags: TagTriple, check?: Answers) => void;
   ask: (name: string, circle: Circle) => string; // devolve link de convite
   receiveFromRoom: (n?: number) => void; // botão de demo
   respond: (id: string, status: 'aceite' | 'recusado') => void;
@@ -37,7 +38,7 @@ const emptyMe: Me = { name: '', self: null, figure: null, tagline: null, created
 
 const incoming = (fromName: string, circle: Circle, fromId = 'guest'): Might => ({
   id: uid(), fromId, fromName, toId: 'me', toName: 'Eu', circle, tags: randomTriple(),
-  status: 'pendente', createdAt: Date.now(),
+  status: 'pendente', createdAt: Date.now(), check: randomAnswers(),
 });
 
 export const useMight = create<State>()(
@@ -55,16 +56,16 @@ export const useMight = create<State>()(
 
       startTimer: () => { if (!get().startedAt) set({ startedAt: Date.now() }); },
 
-      createSelf: (name, tags) => {
+      createSelf: (name, tags, answers) => {
         const started = get().startedAt ?? Date.now();
         set({
-          me: { name, self: tags, figure: figureFor(tags), tagline: taglineFor(tags), createdMs: Date.now() - started },
+          me: { name, self: tags, figure: figureFor(tags), tagline: taglineFor(tags), createdMs: Date.now() - started, answers },
         });
       },
 
-      send: (to, circle, tags) => {
+      send: (to, circle, tags, check) => {
         const m: Might = { id: uid(), fromId: 'me', fromName: get().me.name, toId: to.id, toName: to.name,
-          circle, tags, status: 'aceite', createdAt: Date.now() };
+          circle, tags, check, status: 'aceite', createdAt: Date.now() };
         set({ mights: [m, ...get().mights] });
         // Simulação: a pessoa retribui passados uns segundos.
         setTimeout(() => set({ mights: [incoming(to.name, circle, to.id), ...get().mights] }), RECIPROCITY_MS);

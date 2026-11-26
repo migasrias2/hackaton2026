@@ -18,6 +18,7 @@ export function Pressy({ children, onPress, style, disabled, scaleTo = 0.98, ins
   children: ReactNode; onPress?: () => void; style?: any; disabled?: boolean; scaleTo?: number; instant?: boolean;
 }) {
   const sc = useSharedValue(1);
+  instant = instant && Platform.OS !== 'web'; // na web o onPressIn não dispara de forma fiável
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: sc.value }], opacity: 1 - (1 - sc.value) * 8 }));
   return (
     <AnimatedPressable
@@ -160,6 +161,27 @@ export function Steps({ n, at }: { n: number; at: number }) {
       {Array.from({ length: n }, (_, i) => (
         <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= at ? C.teal : C.mint100 }} />
       ))}
+    </View>
+  );
+}
+
+/** Escolha Sim / Talvez / Não, uma opção por linha (avança ao tocar). */
+export function Choice<T extends string>({ options, value, onPick }: {
+  options: { key: T; label: string }[]; value?: T; onPick: (k: T) => void;
+}) {
+  return (
+    <View style={{ gap: 10 }}>
+      {options.map((o) => {
+        const on = value === o.key;
+        return (
+          <Pressy key={o.key} instant onPress={() => onPick(o.key)} style={{
+            paddingVertical: 16, paddingHorizontal: 18, borderRadius: R.md, borderCurve: 'continuous', borderWidth: 1,
+            backgroundColor: on ? C.mint300 : C.surface, borderColor: on ? C.teal : C.separator,
+          }}>
+            <Text style={{ fontSize: 17, fontWeight: '600', color: on ? C.onTeal : C.dark }}>{o.label}</Text>
+          </Pressy>
+        );
+      })}
     </View>
   );
 }

@@ -53,6 +53,7 @@ export type Might = {
   tags: TagTriple;
   status: MightStatus;
   createdAt: number;
+  check?: import('./profile').Answers; // validação do perfil (5 × Sim/Talvez/Não)
 };
 
 /** Pessoa fictícia da rede (dados semente). */
@@ -80,6 +81,7 @@ export type Me = {
   figure: string | null; // chave de FIGURES
   tagline: string | null;
   createdMs: number | null; // tempo até ao 1.º MighT
+  answers?: import('./profile').Answers; // perguntas de entrada (autoavaliação)
 };
 
 /** Publicação "Como me sinto": foto (opcional, fica no telemóvel) + estado de espírito. */

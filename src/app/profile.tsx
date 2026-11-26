@@ -7,9 +7,11 @@ import { Figure, TagParts, WeightBars } from '@/components/might';
 import { Button, Caps, Card, Chip, H1, H2, Locked, P, Row, Screen } from '@/components/ui';
 import { label } from '@/data/tags';
 import { CIRCLE_LABEL, Circle, DIM_INFO, DIMS } from '@/data/types';
+import { peerScores, PROFILE_QS, profileIndex, profileOf } from '@/data/profile';
 import { figureFor } from '@/lib/figure';
 import { accepted, isUnlocked, topTags, topTriple, UNLOCK_AT, weightsFrom } from '@/lib/logic';
 import { useMight } from '@/store/useMight';
+import { C } from '@/theme';
 
 export default function Profile() {
   const me = useMight((s) => s.me);
@@ -63,6 +65,8 @@ export default function Profile() {
         </Card>
       ) : null}
 
+      <NetworkCard selfAnswers={me.answers} checks={list.flatMap((m) => (m.check ? [m.check] : []))} />
+
       {DIMS.map((d) => (
         <Card key={d}>
           <Caps>{DIM_INFO[d].part} · {DIM_INFO[d].label}</Caps>
@@ -71,5 +75,28 @@ export default function Profile() {
       ))}
       <P muted style={{ fontSize: 12 }}>Peso = nº de vezes que a tag foi dada ÷ total de tags nessa dimensão.</P>
     </Screen>
+  );
+}
+
+/** Perfil na rede: o que eu disse nas perguntas de entrada vs a média dos amigos (Sim 2 · Talvez 1 · Não 0). */
+function NetworkCard({ selfAnswers, checks }: { selfAnswers?: import('@/data/profile').Answers; checks: import('@/data/profile').Answers[] }) {
+  const peers = peerScores(checks);
+  if (!peers) return null;
+  const theirs = PROFILE_QS[profileIndex(peers)];
+  const mine = selfAnswers ? profileOf(selfAnswers) : null;
+  return (
+    <Card>
+      <Caps>Perfil na rede · {checks.length} amigos validaram</Caps>
+      <H2>{mine && mine.profile === theirs.profile ? `Confirmado: ${theirs.profile}` : `Os amigos veem-te como ${theirs.profile}`}</H2>
+      {mine && mine.profile !== theirs.profile ? <P muted>Tu disseste {mine.profile}.</P> : null}
+      {PROFILE_QS.map((q, i) => (
+        <View key={q.tag} style={{ gap: 4 }}>
+          <P style={{ fontSize: 13 }}>{q.tag} · {Math.round((peers[i] / 2) * 100)}%</P>
+          <View style={{ height: 6, borderRadius: 3, backgroundColor: C.mint100 }}>
+            <View style={{ width: `${(peers[i] / 2) * 100}%`, height: 6, borderRadius: 3, backgroundColor: C.teal }} />
+          </View>
+        </View>
+      ))}
+    </Card>
   );
 }

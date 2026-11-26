@@ -1,11 +1,12 @@
 // PASSO 1 · Cria o teu MighT (Self MighT). Dono: Pessoa 2.
-// Objetivo: 1.º MighT em < 2 min → nome, 3 tags, "IA" desenha figura + tagline.
+// Objetivo: 1.º MighT em < 2 min → nome, 5 perguntas de entrada (Sim/Talvez/Não), 3 tags, "IA" desenha figura + tagline.
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { Figure, TagGrid, TagParts } from '@/components/might';
-import { Button, Caps, H1, Input, P, Screen, Steps } from '@/components/ui';
+import { Button, Caps, Card, Choice, H1, H2, Input, P, Screen, Steps } from '@/components/ui';
+import { Answer, ANSWER_LABEL, Answers, ANSWERS, PROFILE_QS, profileOf } from '@/data/profile';
 import { DIM_INFO, DIMS, TagTriple } from '@/data/types';
 import { figureFor } from '@/lib/figure';
 import { useMight } from '@/store/useMight';
@@ -17,7 +18,10 @@ const SELF_Q = {
   caracter: 'Que valor te define?',
 } as const;
 
-type Phase = 'name' | 0 | 1 | 2 | 'loading' | 'done';
+// 'name' → perguntas q0–q4 → tags 0–2 → loading → done
+type Phase = 'name' | `q${number}` | 0 | 1 | 2 | 'loading' | 'done';
+const N = 9; // nome + 5 perguntas + 3 tags
+const OPTS = ANSWERS.map((k) => ({ key: k, label: ANSWER_LABEL[k] }));
 
 export default function Create() {
   const me = useMight((s) => s.me);
@@ -26,23 +30,24 @@ export default function Create() {
   const [phase, setPhase] = useState<Phase>('name');
   const [name, setName] = useState(me.name);
   const [tags, setTags] = useState<Partial<TagTriple>>({});
+  const [answers, setAnswers] = useState<(Answer | undefined)[]>([]);
 
   useEffect(() => { startTimer(); }, [startTimer]);
 
   useEffect(() => {
     if (phase !== 'loading') return;
-    const t = setTimeout(() => { createSelf(name.trim(), tags as TagTriple); setPhase('done'); }, 1400);
+    const t = setTimeout(() => { createSelf(name.trim(), tags as TagTriple, answers as Answers); setPhase('done'); }, 1400);
     return () => clearTimeout(t);
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (phase === 'name') {
     return (
-      <Screen step="Passo 1 de 6" footer={<Button title="CONTINUAR" disabled={!name.trim()} onPress={() => setPhase(0)} />}>
-        <Steps n={4} at={0} />
+      <Screen step="Passo 1 de 6" footer={<Button title="CONTINUAR" disabled={!name.trim()} onPress={() => setPhase('q0')} />}>
+        <Steps n={N} at={0} />
         <H1>Como te chamas?</H1>
         <P muted>Só o primeiro nome. Ninguém vê o teu MighT sem o teu consentimento.</P>
         <Input value={name} onChangeText={setName} placeholder="O teu primeiro nome" autoFocus
-          returnKeyType="next" onSubmitEditing={() => name.trim() && setPhase(0)} />
+          returnKeyType="next" onSubmitEditing={() => name.trim() && setPhase('q0')} />
       </Screen>
     );
   }
@@ -70,10 +75,34 @@ export default function Create() {
           <Figure figure={me.self ? figureFor(me.self) : null} size={260} />
           <H1 style={{ textAlign: 'center', fontSize: 22 }}>“{me.tagline}”</H1>
           <TagParts tags={me.self} />
+          {me.answers ? (() => { const pr = profileOf(me.answers); return (
+            <Card style={{ alignSelf: 'stretch' }}>
+              <Caps>O teu perfil na rede</Caps>
+              <H2>{pr.profile}</H2>
+              <P muted>{pr.desc} Os teus amigos vão confirmar.</P>
+            </Card>
+          ); })() : null}
           <P muted style={{ textAlign: 'center' }}>
             Boa! Já conseguiste. Mas não seria bestial descobrires o que os outros veem em ti?
           </P>
         </View>
+      </Screen>
+    );
+  }
+
+  if (typeof phase === 'string' && phase.startsWith('q')) {
+    const k = Number(phase.slice(1));
+    const qd = PROFILE_QS[k];
+    const pick = (a: Answer) => {
+      setAnswers((x) => { const n = [...x]; n[k] = a; return n; });
+      setPhase(k < 4 ? (`q${k + 1}` as Phase) : 0);
+    };
+    return (
+      <Screen bg="light" step={`Passo 1 de 6 · ${k + 2}/${N}`} onBack={() => setPhase(k === 0 ? 'name' : (`q${k - 1}` as Phase))}>
+        <Steps n={N} at={k + 1} />
+        <Caps>{String(k + 1).padStart(2, '0')} · {qd.tag}</Caps>
+        <H1 style={{ fontSize: 24 }}>{qd.self}</H1>
+        <Choice options={OPTS} value={answers[k]} onPick={pick} />
       </Screen>
     );
   }
@@ -83,9 +112,9 @@ export default function Create() {
   const info = DIM_INFO[dim];
   const next = () => (i < 2 ? setPhase((i + 1) as Phase) : setPhase('loading'));
   return (
-    <Screen bg="light" step={`Passo 1 de 6 · ${i + 2}/4`} onBack={() => setPhase(i === 0 ? 'name' : ((i - 1) as Phase))}
+    <Screen bg="light" step={`Passo 1 de 6 · ${i + 7}/${N}`} onBack={() => setPhase(i === 0 ? 'q4' : ((i - 1) as Phase))}
       footer={<Button title={i < 2 ? 'SEGUINTE' : 'CRIAR O MEU MIGHT'} disabled={!tags[dim]} onPress={next} />}>
-      <Steps n={4} at={i + 1} />
+      <Steps n={N} at={i + 6} />
       <Caps>{info.part} · {info.label}</Caps>
       <H1 style={{ fontSize: 24 }}>{SELF_Q[dim]}</H1>
       <P muted>{info.hint}</P>
