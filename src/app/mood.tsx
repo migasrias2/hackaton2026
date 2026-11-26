@@ -17,12 +17,13 @@ export default function Mood() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [mood, setMood] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [step, setStep] = useState<'cam' | 'mood'>('cam');
   const [perm, requestPerm] = useCameraPermissions();
   const cam = useRef<CameraView>(null);
 
   // A câmara abre logo ao entrar no ecrã.
   useEffect(() => { if (perm && !perm.granted && perm.canAskAgain) requestPerm(); }, [perm]); // eslint-disable-line react-hooks/exhaustive-deps
-  const live = !photo && !!perm?.granted;
+  const live = step === 'cam' && !photo && !!perm?.granted;
 
   async function snap() {
     try {
@@ -51,28 +52,45 @@ export default function Mood() {
     router.replace('/inbox');
   }
 
+  // Passo 1: câmara em direto. Passo 2: personagem + nota.
+  if (step === 'cam') {
+    return (
+      <Screen footer={photo
+        ? <Button title="Continuar" onPress={() => setStep('mood')} />
+        : <Button title="Saltar" variant="ghost" onPress={() => setStep('mood')} />}>
+        <H1>Tira a tua selfie</H1>
+        {live ? (
+          <View style={st.cam}>
+            <CameraView ref={cam} facing="front" mirror style={StyleSheet.absoluteFill} />
+            <Pressy onPress={snap} scaleTo={0.9} style={st.shutter}><View style={st.shutterIn} /></Pressy>
+          </View>
+        ) : (
+          <Pressy onPress={photo ? () => setPhoto(null) : shoot} style={st.cam}>
+            {photo
+              ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" />
+              : (
+                <View style={{ alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontSize: 40 }}>📷</Text>
+                  <P muted>Toca para tirar uma selfie</P>
+                </View>
+              )}
+            {photo ? <View style={st.retake}><Text style={st.retakeText}>Repetir</Text></View> : null}
+          </Pressy>
+        )}
+      </Screen>
+    );
+  }
+
   return (
     <Screen footer={<Button title="Publicar" disabled={!mood} onPress={publish} />}>
       <H1>Como te sentes hoje?</H1>
-      {live ? (
-        <View style={st.photo}>
-          <CameraView ref={cam} facing="front" mirror style={StyleSheet.absoluteFill} />
-          <Pressy onPress={snap} scaleTo={0.9} style={st.shutter}><View style={st.shutterIn} /></Pressy>
-        </View>
-      ) : (
-      <Pressy onPress={photo ? () => setPhoto(null) : shoot} style={st.photo}>
+      <Pressy onPress={() => setStep('cam')} style={st.photo}>
         {photo
           ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" />
-          : mood ? <Figure figure={mood} size={150} /> : (
-            <View style={{ alignItems: 'center', gap: 6 }}>
-              <Text style={{ fontSize: 34 }}>📷</Text>
-              <P muted>Tira uma selfie</P>
-            </View>
-          )}
-        {photo && mood ? <View style={st.badge}><Figure figure={mood} size={56} /></View> : null}
-        {photo ? <View style={st.retake}><Text style={st.retakeText}>Repetir</Text></View> : null}
+          : mood ? <Figure figure={mood} size={120} /> : <Text style={{ fontSize: 34 }}>📷</Text>}
+        {photo && mood ? <View style={st.badge}><Figure figure={mood} size={48} /></View> : null}
+        <View style={st.retake}><Text style={st.retakeText}>{photo ? 'Mudar foto' : 'Tirar foto'}</Text></View>
       </Pressy>
-      )}
       <Caps>Escolhe a tua personagem</Caps>
       <View style={st.grid}>
         {MOODS.map((m) => {
@@ -91,16 +109,20 @@ export default function Mood() {
 }
 
 const st = StyleSheet.create({
+  cam: {
+    width: '100%', aspectRatio: 3 / 4, maxHeight: 520, alignSelf: 'center', borderRadius: R.lg, borderCurve: 'continuous', overflow: 'hidden',
+    backgroundColor: C.surface, borderWidth: 1, borderColor: C.mint100, alignItems: 'center', justifyContent: 'center',
+  },
   photo: {
-    alignSelf: 'center', width: 260, height: 260, borderRadius: R.lg, borderCurve: 'continuous', overflow: 'hidden',
+    alignSelf: 'center', width: 180, height: 180, borderRadius: R.lg, borderCurve: 'continuous', overflow: 'hidden',
     backgroundColor: C.surface, borderWidth: 1, borderColor: C.mint100, alignItems: 'center', justifyContent: 'center',
   },
   badge: { position: 'absolute', right: 8, bottom: 8, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, padding: 4 },
   shutter: {
-    position: 'absolute', bottom: 12, alignSelf: 'center', width: 56, height: 56, borderRadius: 28,
+    position: 'absolute', bottom: 16, alignSelf: 'center', width: 64, height: 64, borderRadius: 32,
     borderWidth: 3, borderColor: C.surface, alignItems: 'center', justifyContent: 'center',
   },
-  shutterIn: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.surface },
+  shutterIn: { width: 50, height: 50, borderRadius: 25, backgroundColor: C.surface },
   retake: { position: 'absolute', left: 8, bottom: 8, backgroundColor: 'rgba(4,54,58,0.7)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   retakeText: { color: C.surface, fontSize: 12, fontWeight: '600' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
