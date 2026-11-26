@@ -25,6 +25,7 @@
     },
     "plugins": [
       "expo-router",
+      ["expo-camera", { "cameraPermission": "O MighT usa a câmara para tirares a tua selfie do dia.", "recordAudioAndroid": false }],
       [
         "expo-splash-screen",
         {
