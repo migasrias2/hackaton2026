@@ -1,0 +1,76 @@
+// Barra flutuante tipo "Dynamic Island" (pílula escura em baixo). Dono: Integrador.
+import { SymbolView } from 'expo-symbols';
+import { Href, router, usePathname } from 'expo-router';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeOut, LinearTransition, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useTabBarVisible } from '@/components/tabs';
+import { Pressy } from '@/components/ui';
+import { pending } from '@/lib/logic';
+import { useMight } from '@/store/useMight';
+import { C } from '@/theme';
+
+type Tab = { href: Href; label: string; icon: string; on: string; web: string; match: string[] };
+
+export const TABS: Tab[] = [
+  { href: '/', label: 'Início', icon: 'house', on: 'house.fill', web: '⌂', match: ['/'] },
+  { href: '/inbox', label: 'Amigos', icon: 'person.2', on: 'person.2.fill', web: '☺', match: ['/inbox', '/send', '/ask'] },
+  { href: '/profile', label: 'All MighT', icon: 'sparkles', on: 'sparkles', web: '✦', match: ['/profile', '/card'] },
+  { href: '/discover', label: 'Personalidades', icon: 'person.3', on: 'person.3.fill', web: '◎', match: ['/discover'] },
+  { href: '/roles', label: 'Funções', icon: 'briefcase', on: 'briefcase.fill', web: '▤', match: ['/roles'] },
+];
+
+const spring = LinearTransition.springify().damping(18).stiffness(220);
+
+export function TabBar() {
+  const visible = useTabBarVisible();
+  const path = usePathname();
+  const nPend = useMight((s) => pending(s.mights).length);
+  const insets = useSafeAreaInsets();
+  if (!visible) return null;
+
+  return (
+    <Animated.View pointerEvents="box-none" entering={SlideInDown.springify().damping(16)} exiting={SlideOutDown}
+      style={[st.wrap, { bottom: Math.max(insets.bottom - 6, 12) }]}>
+      <Animated.View layout={spring} style={st.pill}>
+        {TABS.map((t) => {
+          const active = t.match.includes(path);
+          return (
+            <Pressy key={t.label} scaleTo={0.9} onPress={() => { if (!active || path !== t.href) router.navigate(t.href); }}>
+              <Animated.View layout={spring} style={[st.item, active && st.itemOn]}>
+                <Icon tab={t} active={active} />
+                {active ? (
+                  <Animated.Text entering={FadeIn.duration(220).delay(60)} exiting={FadeOut.duration(80)} numberOfLines={1} style={st.label}>
+                    {t.label}
+                  </Animated.Text>
+                ) : null}
+                {t.label === 'Amigos' && nPend > 0 && !active ? <View style={st.dot} /> : null}
+              </Animated.View>
+            </Pressy>
+          );
+        })}
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+function Icon({ tab, active }: { tab: Tab; active: boolean }) {
+  const color = active ? C.onTeal : 'rgba(255,255,255,0.62)';
+  const fallback = <Text style={{ fontSize: 19, color, width: 22, textAlign: 'center' }}>{tab.web}</Text>;
+  if (Platform.OS !== 'ios') return fallback;
+  return <SymbolView name={(active ? tab.on : tab.icon) as any} size={21} tintColor={color} weight="semibold" fallback={fallback} />;
+}
+
+const st = StyleSheet.create({
+  wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  pill: {
+    flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6, borderRadius: 999, borderCurve: 'continuous',
+    backgroundColor: '#0B0C0E',
+    shadowColor: '#04363A', shadowOpacity: 0.28, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 12,
+  },
+  item: { height: 48, minWidth: 48, paddingHorizontal: 13, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  itemOn: { backgroundColor: C.teal },
+  label: { color: C.onTeal, fontWeight: '600', fontSize: 14, letterSpacing: -0.2 },
+  dot: { position: 'absolute', top: 10, right: 11, width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal, borderWidth: 1.5, borderColor: '#0B0C0E' },
+});

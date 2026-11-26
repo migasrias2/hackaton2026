@@ -1,11 +1,12 @@
 // Componentes base partilhados (estilo minimalista tipo iOS). Dono: Design (Pessoa 4).
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { Children, ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native';
 import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TAB_ROOTS, TAB_SPACE, useTabBarVisible } from '@/components/tabs';
 import { C, R, SHADOW } from '@/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -47,6 +48,10 @@ const enter = (i: number) => FadeInDown.delay(Math.min(i, 8) * 45).duration(420)
 export function Screen({ children, back = true, step, footer }: {
   children: ReactNode; bg?: string; back?: boolean; step?: string; footer?: ReactNode;
 }) {
+  const bar = useTabBarVisible();
+  const path = usePathname();
+  if (bar && TAB_ROOTS.includes(path)) back = false;
+  const pad = bar ? TAB_SPACE : 0;
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
@@ -59,12 +64,12 @@ export function Screen({ children, back = true, step, footer }: {
             ) : <View />}
             {step ? <Text style={s.step}>{step}</Text> : null}
           </View>
-          <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[s.content, !footer && { paddingBottom: 40 + pad }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {Children.toArray(children).map((child, i) => (
               <Animated.View key={i} entering={enter(i)}>{child}</Animated.View>
             ))}
           </ScrollView>
-          {footer ? <Animated.View entering={enter(3)} style={s.footer}>{footer}</Animated.View> : null}
+          {footer ? <Animated.View entering={enter(3)} style={[s.footer, { paddingBottom: 12 + pad }]}>{footer}</Animated.View> : null}
         </View>
       </SafeAreaView>
     </View>
