@@ -7,6 +7,7 @@ import { TagTriple } from '@/data/types';
 export const FIGURES = {
   alegria: require('../../assets/figures/alegria.png'),
   amor: require('../../assets/figures/amor.png'),
+  ansiedade: require('../../assets/figures/ansiedade.png'),
   autoconfianca: require('../../assets/figures/autoconfianca.png'),
   entusiasmo: require('../../assets/figures/entusiasmo.png'),
   frieza: require('../../assets/figures/frieza.png'),
@@ -17,6 +18,21 @@ export const FIGURES = {
 } as const;
 export type FigureKey = keyof typeof FIGURES;
 export const FIGURE_BASE = FIGURES.alegria;
+
+/** Estados de espírito para as fotos "Como me sinto" (nomes neutros em género). */
+export const MOODS: { key: FigureKey; label: string }[] = [
+  { key: 'alegria', label: 'Alegria' },
+  { key: 'entusiasmo', label: 'Entusiasmo' },
+  { key: 'amor', label: 'Amor' },
+  { key: 'autoconfianca', label: 'Confiança' },
+  { key: 'serenidade', label: 'Calma' },
+  { key: 'frieza', label: 'Frieza' },
+  { key: 'ansiedade', label: 'Ansiedade' },
+  { key: 'tristeza', label: 'Tristeza' },
+  { key: 'raiva', label: 'Raiva' },
+  { key: 'nojo', label: 'Nojo' },
+];
+export const moodLabel = (k: string) => MOODS.find((m) => m.key === k)?.label ?? k;
 
 /** A figura sai da tag de Personalidade (a "cabeça") escolhida. */
 const BY_PERSONALITY: Record<string, FigureKey> = {

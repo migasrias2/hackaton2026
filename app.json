@@ -33,7 +33,14 @@
           "imageWidth": 76
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "O MighT usa a câmara para publicares como te sentes hoje.",
+          "photosPermission": "O MighT usa as tuas fotos para publicares como te sentes hoje."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,

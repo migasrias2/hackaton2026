@@ -11,5 +11,5 @@ export const TAB_SPACE = 72;
 export function useTabBarVisible() {
   const hasMight = useMight((s) => !!s.me.self);
   const path = usePathname();
-  return hasMight && path !== '/create';
+  return hasMight && path !== '/create' && path !== '/mood';
 }

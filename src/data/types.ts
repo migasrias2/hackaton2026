@@ -81,3 +81,14 @@ export type Me = {
   tagline: string | null;
   createdMs: number | null; // tempo até ao 1.º MighT
 };
+
+/** Publicação "Como me sinto": foto (opcional, fica no telemóvel) + estado de espírito. */
+export type Post = {
+  id: string;
+  personId: string; // 'me' quando é minha
+  name: string;
+  mood: string; // chave de FIGURES
+  photo: string | null; // uri local
+  note: string;
+  createdAt: number;
+};

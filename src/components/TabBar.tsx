@@ -17,7 +17,7 @@ export const TABS: Tab[] = [
   { href: '/', label: 'Início', icon: 'house', on: 'house.fill', web: '⌂', match: ['/'] },
   { href: '/inbox', label: 'Amigos', icon: 'person.2', on: 'person.2.fill', web: '☺', match: ['/inbox', '/send', '/ask'] },
   { href: '/profile', label: 'All MighT', icon: 'sparkles', on: 'sparkles', web: '✦', match: ['/profile', '/card'] },
-  { href: '/discover', label: 'Personalidades', icon: 'person.3', on: 'person.3.fill', web: '◎', match: ['/discover'] },
+  { href: '/discover', label: 'Pessoas', icon: 'person.3', on: 'person.3.fill', web: '◎', match: ['/discover'] },
   { href: '/roles', label: 'Funções', icon: 'briefcase', on: 'briefcase.fill', web: '▤', match: ['/roles'] },
 ];
 
@@ -34,9 +34,18 @@ export function TabBar() {
     <Animated.View pointerEvents="box-none" entering={FadeIn.duration(250)} exiting={FadeOut.duration(150)}
       style={[st.wrap, { bottom: Math.max(insets.bottom - 6, 12) }]}>
       <Animated.View layout={spring} style={st.pill}>
-        {TABS.map((t) => {
+        {TABS.map((t, i) => {
           const active = t.match.includes(path);
-          return (
+          const plus = i === 2 ? (
+            <Pressy key="mood" scaleTo={0.9} instant onPress={() => router.push('/mood')}>
+              <View style={st.plus}>
+                {Platform.OS === 'ios'
+                  ? <SymbolView name="camera.fill" size={19} tintColor={C.onTeal} weight="semibold" fallback={<Text style={st.plusTxt}>+</Text>} />
+                  : <Text style={st.plusTxt}>+</Text>}
+              </View>
+            </Pressy>
+          ) : null;
+          return [plus, (
             <Pressy key={t.label} scaleTo={0.94} instant onPress={() => { if (!active || path !== t.href) router.navigate(t.href); }}>
               <Animated.View layout={spring} style={[st.item, active && st.itemOn]}>
                 <Icon tab={t} active={active} />
@@ -48,7 +57,7 @@ export function TabBar() {
                 {t.label === 'Amigos' && nPend > 0 && !active ? <View style={st.dot} /> : null}
               </Animated.View>
             </Pressy>
-          );
+          )];
         })}
       </Animated.View>
     </Animated.View>
@@ -72,5 +81,7 @@ const st = StyleSheet.create({
   item: { height: 48, minWidth: 48, paddingHorizontal: 13, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   itemOn: { backgroundColor: C.teal },
   label: { color: C.onTeal, fontWeight: '600', fontSize: 14, letterSpacing: -0.2 },
+  plus: { width: 44, height: 44, marginHorizontal: 2, borderRadius: 22, backgroundColor: C.mint300, alignItems: 'center', justifyContent: 'center' },
+  plusTxt: { fontSize: 24, fontWeight: '500', color: C.onTeal, marginTop: -2 },
   dot: { position: 'absolute', top: 10, right: 11, width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal, borderWidth: 1.5, borderColor: '#FFFFFF' },
 });

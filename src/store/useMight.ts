@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { PEOPLE, randomTriple } from '@/data/seed';
-import { CIRCLES, Circle, Me, Might, TagTriple } from '@/data/types';
+import { CIRCLES, Circle, Me, Might, Post, TagTriple } from '@/data/types';
 import { figureFor, taglineFor } from '@/lib/figure';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -20,8 +20,18 @@ type State = {
   ask: (name: string, circle: Circle) => string; // devolve link de convite
   receiveFromRoom: (n?: number) => void; // botão de demo
   respond: (id: string, status: 'aceite' | 'recusado') => void;
+  posts: Post[];
+  addPost: (mood: string, photo: string | null, note: string) => void;
   reset: () => void;
 };
+
+// Publicações de demo dos amigos (sem foto: mostra a personagem).
+const SEED_MOODS = ['entusiasmo', 'serenidade', 'ansiedade', 'alegria', 'amor'];
+const SEED_NOTES = ['Primeiro dia no estágio!', 'Domingo de praia.', 'Apresentação às 10h…', 'Passei no exame 🎉', 'Jantar com a família.'];
+const seedPosts = (): Post[] => PEOPLE.slice(0, 5).map((p, i) => ({
+  id: `seed-${i}`, personId: p.id, name: p.name, mood: SEED_MOODS[i], photo: null, note: SEED_NOTES[i],
+  createdAt: Date.now() - (i + 1) * 47 * 60 * 1000,
+}));
 
 const emptyMe: Me = { name: '', self: null, figure: null, tagline: null, createdMs: null };
 
@@ -36,6 +46,12 @@ export const useMight = create<State>()(
       me: emptyMe,
       mights: [],
       startedAt: null,
+      posts: seedPosts(),
+
+      addPost: (mood, photo, note) => {
+        const p: Post = { id: uid(), personId: 'me', name: get().me.name || 'Eu', mood, photo, note, createdAt: Date.now() };
+        set({ posts: [p, ...get().posts] });
+      },
 
       startTimer: () => { if (!get().startedAt) set({ startedAt: Date.now() }); },
 
@@ -71,7 +87,7 @@ export const useMight = create<State>()(
       respond: (id, status) =>
         set({ mights: get().mights.map((m) => (m.id === id ? { ...m, status } : m)) }),
 
-      reset: () => set({ me: emptyMe, mights: [], startedAt: null }),
+      reset: () => set({ me: emptyMe, mights: [], startedAt: null, posts: seedPosts() }),
     }),
     { name: 'might-v1', storage: createJSONStorage(() => AsyncStorage) },
   ),
