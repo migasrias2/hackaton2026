@@ -1,14 +1,15 @@
 // Início: boas-vindas (sem MighT) ou saudação + figura + "o que pensam de ti". Dono: Integrador.
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
+import Svg, { Circle } from 'react-native-svg';
 
 import { Figure, Logo } from '@/components/might';
-import { Button, Card, H1, P, Pressy, Screen, tap } from '@/components/ui';
+import { Button, Card, H1, P, Pressy, Screen } from '@/components/ui';
 import { label } from '@/data/tags';
-import { Dim, DIM_INFO, DIMS } from '@/data/types';
-import { received } from '@/lib/logic';
+import { DIM_INFO, DIMS } from '@/data/types';
+import { received, similarity, weightsFrom } from '@/lib/logic';
 import { figureFor } from '@/lib/figure';
 import { useMight } from '@/store/useMight';
 import { C, DIM_COLOR } from '@/theme';
@@ -37,13 +38,13 @@ export default function Home() {
 
   return (
     <Screen back={false}>
-      <View style={{ gap: 2, paddingTop: 8 }}>
+      <View style={{ gap: 2 }}>
         <Text style={st.hello}>{greeting()},</Text>
         <H1>{me.name || 'Olá'}</H1>
       </View>
       <Animated.View entering={FadeIn.duration(400)} style={{ alignItems: 'center' }}>
         <Pressy scaleTo={0.98} onPress={() => router.navigate('/profile')}>
-          <Figure figure={figureFor(me.self)} size={210} />
+          <Figure figure={figureFor(me.self)} size={160} />
         </Pressy>
       </Animated.View>
       <OthersThink />
@@ -57,13 +58,15 @@ function greeting() {
   return h < 6 ? 'Boa noite' : h < 13 ? 'Bom dia' : h < 20 ? 'Boa tarde' : 'Boa noite';
 }
 
-/** "O que pensam de ti": barras por tag, agrupadas por Cabeça · Braço · Mão (MighTs recebidos, exceto recusados). */
+/** "O que pensam de ti": anel 0–100 = quanto os outros te veem como tu te vês
+ *  (semelhança entre as tuas 3 tags e as dos MighTs recebidos, exceto recusados).
+ *  Anéis pequenos: a palavra mais dada em cada parte e a % de pessoas que a deram. */
 function OthersThink() {
+  const me = useMight((s) => s.me);
   const mights = useMight((s) => s.mights);
   const got = received(mights).filter((m) => m.status !== 'recusado');
-  const [sel, setSel] = useState<{ dim: Dim; id: string } | null>(null);
 
-  if (!got.length) {
+  if (!got.length || !me.self) {
     return (
       <Card style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
         <Text style={st.cardTitle}>O que pensam de ti</Text>
@@ -73,43 +76,34 @@ function OthersThink() {
     );
   }
 
-  const groups = DIMS.map((dim) => {
-    const count: Record<string, number> = {};
-    got.forEach((m) => { count[m.tags[dim]] = (count[m.tags[dim]] ?? 0) + 1; });
-    const bars = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 4);
-    return { dim, bars };
+  const others = weightsFrom(got.map((m) => m.tags));
+  const score = Math.round(similarity(weightsFrom([me.self]), others) * 100);
+  const parts = DIMS.map((dim) => {
+    const [id, w] = Object.entries(others[dim]).sort((x, y) => y[1] - x[1])[0];
+    return { dim, id, v: Math.round(w * 100) };
   });
-  const max = Math.max(...groups.flatMap((g) => g.bars.map((b) => b[1])));
-  const cur = sel ?? (() => {
-    const best = groups.flatMap((g) => g.bars.map(([id, n]) => ({ dim: g.dim, id, n }))).sort((a, b) => b.n - a.n)[0];
-    return { dim: best.dim, id: best.id };
-  })();
-  const curN = groups.find((g) => g.dim === cur.dim)?.bars.find((b) => b[0] === cur.id)?.[1] ?? 0;
 
   return (
-    <Card style={{ gap: 14 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+    <Card style={{ gap: 14, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', alignItems: 'baseline' }}>
         <Text style={st.cardTitle}>O que pensam de ti</Text>
         <Text style={st.cardSub}>{got.length} MighT{got.length > 1 ? 's' : ''}</Text>
       </View>
-      <View>
-        <Text style={st.selWord}>{label(cur.id)}</Text>
-        <Text style={st.cardSub}>{DIM_INFO[cur.dim].part} · {curN} de {got.length} pessoa{got.length > 1 ? 's' : ''}</Text>
-      </View>
-      <View style={st.chart}>
-        {groups.map((g) => (
-          <View key={g.dim} style={st.group}>
-            <View style={st.bars}>
-              {g.bars.map(([id, n]) => {
-                const on = cur.dim === g.dim && cur.id === id;
-                return (
-                  <Pressable key={id} onPressIn={() => { tap(); setSel({ dim: g.dim, id }); }} hitSlop={4} style={st.barHit}>
-                    <GrowBar h={12 + (n / max) * 96} color={DIM_COLOR[g.dim]} dim={!on} />
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Text style={st.groupLabel}>{DIM_INFO[g.dim].part}</Text>
+      <Ring value={score} size={140} stroke={12} color={C.teal}>
+        <Text style={st.big}>{score}</Text>
+        <Text style={st.cardSub}>de 100</Text>
+      </Ring>
+      <P muted style={{ textAlign: 'center', marginTop: -4 }}>
+        {score >= 67 ? 'Veem-te como tu te vês.' : score >= 34 ? 'Veem-te em parte como tu te vês.' : 'Veem em ti algo que ainda não vês.'}
+      </P>
+      <View style={st.row3}>
+        {parts.map((p) => (
+          <View key={p.dim} style={st.mini}>
+            <Ring value={p.v} size={60} stroke={6} color={DIM_COLOR[p.dim]}>
+              <Text style={st.miniNum}>{p.v}</Text>
+            </Ring>
+            <Text style={st.miniWord} numberOfLines={1}>{label(p.id)}</Text>
+            <Text style={st.miniPart}>{DIM_INFO[p.dim].part}</Text>
           </View>
         ))}
       </View>
@@ -117,23 +111,36 @@ function OthersThink() {
   );
 }
 
-function GrowBar({ h, color, dim }: { h: number; color: string; dim: boolean }) {
+const ACircle = Animated.createAnimatedComponent(Circle);
+
+/** Anel de progresso 0–100 que se preenche ao aparecer. */
+function Ring({ value, size, stroke, color, children }: { value: number; size: number; stroke: number; color: string; children?: React.ReactNode }) {
+  const r = (size - stroke) / 2;
+  const len = 2 * Math.PI * r;
   const v = useSharedValue(0);
-  useEffect(() => { v.value = withTiming(h, { duration: 380, easing: Easing.out(Easing.cubic) }); }, [h]);
-  const a = useAnimatedStyle(() => ({ height: v.value }));
-  return <Animated.View style={[st.bar, { backgroundColor: color, opacity: dim ? 0.35 : 1 }, a]} />;
+  useEffect(() => { v.value = withTiming(Math.max(0, Math.min(100, value)) / 100, { duration: 700, easing: Easing.out(Easing.cubic) }); }, [value]);
+  const props = useAnimatedProps(() => ({ strokeDashoffset: len * (1 - v.value) }));
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={C.mint100} strokeWidth={stroke} fill="none" />
+        <ACircle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none" strokeLinecap="round"
+          strokeDasharray={`${len} ${len}`} animatedProps={props} rotation={-90} originX={size / 2} originY={size / 2} />
+      </Svg>
+      {children}
+    </View>
+  );
 }
 
 const st = StyleSheet.create({
   hello: { fontWeight: '400', fontSize: 17, color: C.muted },
   cardTitle: { fontWeight: '600', fontSize: 17, color: C.dark, letterSpacing: -0.3 },
   cardSub: { fontWeight: '400', fontSize: 13, color: C.muted },
-  selWord: { fontWeight: '700', fontSize: 24, letterSpacing: -0.5, color: C.dark },
-  chart: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  group: { flex: 1, alignItems: 'center', gap: 8 },
-  bars: { height: 110, flexDirection: 'row', alignItems: 'flex-end', gap: 6 },
-  barHit: { justifyContent: 'flex-end', height: 110 },
-  bar: { width: 14, borderRadius: 7 },
-  groupLabel: { fontWeight: '500', fontSize: 12, color: C.muted },
+  big: { fontWeight: '700', fontSize: 44, color: C.dark, letterSpacing: -1.5, lineHeight: 48 },
+  row3: { flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'space-between' },
+  mini: { flex: 1, alignItems: 'center', gap: 4 },
+  miniNum: { fontWeight: '700', fontSize: 17, color: C.dark, letterSpacing: -0.5 },
+  miniWord: { fontWeight: '600', fontSize: 14, color: C.dark, marginTop: 4 },
+  miniPart: { fontWeight: '400', fontSize: 12, color: C.muted },
   reset: { fontWeight: '400', color: C.muted, textAlign: 'center', fontSize: 13 },
 });
