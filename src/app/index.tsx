@@ -38,9 +38,9 @@ export default function Home() {
 
   return (
     <Screen back={false}>
-      <View style={{ gap: 2 }}>
+      <View style={{ gap: 0, alignItems: 'center' }}>
         <Text style={st.hello}>{greeting()},</Text>
-        <H1>{me.name || 'Olá'}</H1>
+        <Text style={st.name}>{me.name || 'Olá'}</Text>
       </View>
       <Animated.View entering={FadeIn.duration(400)} style={{ alignItems: 'center' }}>
         <Pressy scaleTo={0.98} onPress={() => router.navigate('/profile')}>
@@ -133,7 +133,8 @@ function Ring({ value, size, stroke, color, children }: { value: number; size: n
 }
 
 const st = StyleSheet.create({
-  hello: { fontWeight: '400', fontSize: 17, color: C.muted },
+  hello: { fontWeight: '400', fontSize: 15, color: C.muted, textAlign: 'center' },
+  name: { fontWeight: '700', fontSize: 24, color: C.dark, letterSpacing: -0.5, lineHeight: 30, textAlign: 'center' },
   cardTitle: { fontWeight: '600', fontSize: 17, color: C.dark, letterSpacing: -0.3 },
   cardSub: { fontWeight: '400', fontSize: 13, color: C.muted },
   big: { fontWeight: '700', fontSize: 44, color: C.dark, letterSpacing: -1.5, lineHeight: 48 },
