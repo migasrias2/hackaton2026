@@ -13,7 +13,7 @@ import { useMight } from '@/store/useMight';
 import { C } from '@/theme';
 
 const SELF_Q = {
-  personalidade: 'Que palavra descreve melhor a tua personalidade?',
+  personalidade: 'Que palavras descrevem a tua personalidade?',
   poder: 'Qual é o teu talento natural?',
   caracter: 'Que valor te define?',
 } as const;
@@ -30,13 +30,14 @@ export default function Create() {
   const [phase, setPhase] = useState<Phase>('name');
   const [name, setName] = useState(me.name);
   const [tags, setTags] = useState<Partial<TagTriple>>({});
+  const [persona, setPersona] = useState<string[]>([]); // várias tags de personalidade (máx. 3)
   const [answers, setAnswers] = useState<(Answer | undefined)[]>([]);
 
   useEffect(() => { startTimer(); }, [startTimer]);
 
   useEffect(() => {
     if (phase !== 'loading') return;
-    const t = setTimeout(() => { createSelf(name.trim(), tags as TagTriple, answers as Answers); setPhase('done'); }, 1400);
+    const t = setTimeout(() => { createSelf(name.trim(), { ...tags, personalidade: persona[0] } as TagTriple, answers as Answers, persona.slice(1)); setPhase('done'); }, 1400);
     return () => clearTimeout(t);
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -74,7 +75,7 @@ export default function Create() {
           <Caps>O teu Self MighT{secs ? ` · criado em ${secs} s` : ''}</Caps>
           <Figure figure={me.self ? figureFor(me.self) : null} size={260} />
           <H1 style={{ textAlign: 'center', fontSize: 22 }}>“{me.tagline}”</H1>
-          <TagParts tags={me.self} />
+          <TagParts tags={me.self} extra={me.extra} />
           {me.answers ? (() => { const pr = profileOf(me.answers); return (
             <Card style={{ alignSelf: 'stretch' }}>
               <Caps>O teu perfil na rede</Caps>
@@ -110,15 +111,18 @@ export default function Create() {
   const i = phase as 0 | 1 | 2;
   const dim = DIMS[i];
   const info = DIM_INFO[dim];
+  const multi = dim === 'personalidade';
   const next = () => (i < 2 ? setPhase((i + 1) as Phase) : setPhase('loading'));
   return (
     <Screen bg="light" step={`Passo 1 de 6 · ${i + 7}/${N}`} onBack={() => setPhase(i === 0 ? 'q4' : ((i - 1) as Phase))}
-      footer={<Button title={i < 2 ? 'SEGUINTE' : 'CRIAR O MEU MIGHT'} disabled={!tags[dim]} onPress={next} />}>
+      footer={<Button title={i < 2 ? 'SEGUINTE' : 'CRIAR O MEU MIGHT'} disabled={multi ? !persona.length : !tags[dim]} onPress={next} />}>
       <Steps n={N} at={i + 6} />
       <Caps>{info.part} · {info.label}</Caps>
       <H1 style={{ fontSize: 24 }}>{SELF_Q[dim]}</H1>
-      <P muted>{info.hint}</P>
-      <TagGrid dim={dim} value={tags[dim]} onChange={(id) => setTags((t) => ({ ...t, [dim]: id }))} />
+      <P muted>{multi ? 'Escolhe até 3 adjetivos. O primeiro define a tua personagem.' : info.hint}</P>
+      {multi
+        ? <TagGrid dim={dim} values={persona} onChange={(id) => setPersona((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 3 ? [...p, id] : p))} />
+        : <TagGrid dim={dim} value={tags[dim]} onChange={(id) => setTags((t) => ({ ...t, [dim]: id }))} />}
     </Screen>
   );
 }

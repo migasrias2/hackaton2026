@@ -81,6 +81,7 @@ export type Me = {
   figure: string | null; // chave de FIGURES
   tagline: string | null;
   createdMs: number | null; // tempo até ao 1.º MighT
+  extra?: string[]; // mais tags de personalidade (além da principal em self)
   answers?: import('./profile').Answers; // perguntas de entrada (autoavaliação)
 };
 

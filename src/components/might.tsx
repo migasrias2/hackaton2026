@@ -23,24 +23,27 @@ export function Figure({ figure, size = 220 }: { figure?: string | null; size?: 
 }
 
 /** As 3 tags como peças da figura: Cabeça · Braço · Mão */
-export function TagParts({ tags, light }: { tags: TagTriple; light?: boolean }) {
+export function TagParts({ tags, light, extra }: { tags: TagTriple; light?: boolean; extra?: string[] }) {
   return (
     <View style={s.parts}>
       {DIMS.map((d) => (
         <View key={d} style={s.part}>
           <Text style={[s.partDim, { color: DIM_COLOR[d] }]}>{DIM_INFO[d].part}</Text>
-          <Text style={[s.partTag, light && { color: C.light }]} numberOfLines={1}>{label(tags[d])}</Text>
+          <Text style={[s.partTag, light && { color: C.light }]} numberOfLines={2}>
+            {d === 'personalidade' && extra?.length ? [tags[d], ...extra].map(label).join(' · ') : label(tags[d])}
+          </Text>
         </View>
       ))}
     </View>
   );
 }
 
-export function TagGrid({ dim, value, onChange }: { dim: Dim; value?: string; onChange: (id: string) => void }) {
+/** Grelha de tags. Com `values`, permite escolher várias (onChange alterna). */
+export function TagGrid({ dim, value, values, onChange }: { dim: Dim; value?: string; values?: string[]; onChange: (id: string) => void }) {
   return (
     <View style={s.grid}>
       {tagsOf(dim).map((t) => {
-        const on = value === t.id;
+        const on = values ? values.includes(t.id) : value === t.id;
         return (
           <Pressy key={t.id} onPress={() => onChange(t.id)}
             style={[s.cell, on && { backgroundColor: DIM_COLOR[dim], borderColor: DIM_COLOR[dim] }]}>

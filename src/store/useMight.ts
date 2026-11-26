@@ -16,7 +16,7 @@ type State = {
   mights: Might[];
   startedAt: number | null;
   startTimer: () => void;
-  createSelf: (name: string, tags: TagTriple, answers?: Answers) => void;
+  createSelf: (name: string, tags: TagTriple, answers?: Answers, extra?: string[]) => void;
   send: (to: { id: string; name: string }, circle: Circle, tags: TagTriple, check?: Answers) => void;
   ask: (name: string, circle: Circle) => string; // devolve link de convite
   receiveFromRoom: (n?: number) => void; // botão de demo
@@ -56,10 +56,10 @@ export const useMight = create<State>()(
 
       startTimer: () => { if (!get().startedAt) set({ startedAt: Date.now() }); },
 
-      createSelf: (name, tags, answers) => {
+      createSelf: (name, tags, answers, extra) => {
         const started = get().startedAt ?? Date.now();
         set({
-          me: { name, self: tags, figure: figureFor(tags), tagline: taglineFor(tags), createdMs: Date.now() - started, answers },
+          me: { name, self: tags, figure: figureFor(tags), tagline: taglineFor(tags), createdMs: Date.now() - started, answers, extra },
         });
       },
 
