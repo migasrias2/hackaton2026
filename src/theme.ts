@@ -35,9 +35,9 @@ export const C = {
 
 // Cor por dimensão (Cabeça · Braço · Mão)
 export const DIM_COLOR = {
-  personalidade: C.superpowers,
-  poder: C.hidden,
-  caracter: C.confirmed,
+  personalidade: '#0DCEDA',
+  poder: '#2BC4A0',
+  caracter: '#087F87',
 } as const;
 
 // Tipo de letra do sistema (SF Pro no iPhone/Mac). Só pesos.

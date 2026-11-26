@@ -14,17 +14,17 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export const tap = () => { if (Platform.OS !== 'web') Haptics.selectionAsync().catch(() => {}); };
 
 /** Toque discreto: ligeira redução de escala e opacidade + vibração leve. */
-export function Pressy({ children, onPress, style, disabled, scaleTo = 0.98 }: {
-  children: ReactNode; onPress?: () => void; style?: any; disabled?: boolean; scaleTo?: number;
+export function Pressy({ children, onPress, style, disabled, scaleTo = 0.98, instant }: {
+  children: ReactNode; onPress?: () => void; style?: any; disabled?: boolean; scaleTo?: number; instant?: boolean;
 }) {
   const sc = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: sc.value }], opacity: 1 - (1 - sc.value) * 8 }));
   return (
     <AnimatedPressable
       disabled={disabled}
-      onPressIn={() => { sc.value = withTiming(scaleTo, { duration: 90 }); }}
-      onPressOut={() => { sc.value = withTiming(1, { duration: 160 }); }}
-      onPress={() => { tap(); onPress?.(); }}
+      onPressIn={() => { sc.value = withTiming(scaleTo, { duration: 70 }); tap(); if (instant) onPress?.(); }}
+      onPressOut={() => { sc.value = withTiming(1, { duration: 140 }); }}
+      onPress={instant ? undefined : onPress}
       style={[style, anim]}>
       {children}
     </AnimatedPressable>

@@ -23,7 +23,12 @@ export default function Inbox() {
         ? <Button title="VER O MEU ALL MIGHT" onPress={() => router.push('/profile')} />
         : <Button title="RECEBER 3 MIGHTS DA SALA (DEMO)" variant="secondary" onPress={() => receiveFromRoom(3)} />
     }>
-      <H1>Recebidos</H1>
+      <H1>Amigos</H1>
+      <Row style={{ flexWrap: 'nowrap' }}>
+        <Button title="Manda MighT" onPress={() => router.push('/send')} style={{ flex: 1 }} />
+        <Button title="Pede MighT" variant="secondary" onPress={() => router.push('/ask')} style={{ flex: 1 }} />
+      </Row>
+      <Caps>Recebidos</Caps>
       <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View>
           <Caps>MighTs aceites</Caps>

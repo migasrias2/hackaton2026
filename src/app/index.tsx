@@ -1,18 +1,20 @@
-// Início: boas-vindas (sem MighT) ou hub com os 6 passos. Dono: Integrador.
-import { Href, router } from 'expo-router';
+// Início: boas-vindas (sem MighT) ou saudação + figura + "o que pensam de ti". Dono: Integrador.
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { Figure, Logo, TagParts } from '@/components/might';
-import { Button, Card, H1, P, Pressy, Screen } from '@/components/ui';
-import { accepted, isUnlocked, pending, sent, UNLOCK_AT } from '@/lib/logic';
+import { Figure, Logo } from '@/components/might';
+import { Button, Card, H1, P, Pressy, Screen, tap } from '@/components/ui';
+import { label } from '@/data/tags';
+import { Dim, DIM_INFO, DIMS } from '@/data/types';
+import { received } from '@/lib/logic';
 import { figureFor } from '@/lib/figure';
 import { useMight } from '@/store/useMight';
-import { C, F } from '@/theme';
+import { C, DIM_COLOR } from '@/theme';
 
 export default function Home() {
   const me = useMight((s) => s.me);
-  const mights = useMight((s) => s.mights);
   const reset = useMight((s) => s.reset);
   const startTimer = useMight((s) => s.startTimer);
 
@@ -33,60 +35,105 @@ export default function Home() {
     );
   }
 
-  const nAcc = accepted(mights).length;
-  const nPend = pending(mights).length;
-  const nSent = sent(mights).length;
-  const open = isUnlocked(mights);
-
-  const items: { n: string; title: string; sub: string; href: Href; badge?: number }[] = [
-    { n: '2A', title: 'Manda MighT', sub: nSent ? `${nSent} enviado(s)` : 'Para receberes, começa por dar', href: '/send' },
-    { n: '2B', title: 'Pede MighT', sub: nSent ? 'Envia um link de convite' : 'Disponível depois de enviares', href: '/ask' },
-    { n: '↓', title: 'Recebidos', sub: nPend ? `${nPend} à espera de resposta` : 'Aceita ou recusa', href: '/inbox', badge: nPend },
-    { n: '3', title: 'All MighT', sub: open ? 'Como os outros te veem' : `${nAcc}/${UNLOCK_AT} MighTs aceites para desbloquear`, href: '/profile' },
-    { n: '4', title: 'MighT Card', sub: 'Descarrega e partilha', href: '/card' },
-    { n: '5', title: 'Pessoas como tu', sub: 'Por % de semelhança', href: '/discover' },
-    { n: '6', title: 'Funções ideais', sub: 'O teu próximo passo', href: '/roles' },
-  ];
-
   return (
     <Screen back={false}>
-      <View style={{ alignItems: 'center', gap: 8 }}>
-        <Text style={st.hello}>Olá,</Text>
-        <H1>{me.name}</H1>
-        <Button title="Ver All MighT" variant="secondary" onPress={() => router.push('/profile')} style={{ height: 38 }} />
-        <Animated.View entering={FadeIn.duration(400)}><Figure figure={figureFor(me.self)} size={220} /></Animated.View>
-        <TagParts tags={me.self} />
-        {me.tagline ? <P style={{ textAlign: 'center', fontStyle: 'italic' }}>“{me.tagline}”</P> : null}
+      <View style={{ gap: 2, paddingTop: 8 }}>
+        <Text style={st.hello}>{greeting()},</Text>
+        <H1>{me.name || 'Olá'}</H1>
       </View>
-      <Card style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-        {items.map((it, i) => (
-          <Pressy key={it.title} scaleTo={0.985} onPress={() => router.push(it.href)}
-            style={[st.row, i < items.length - 1 && st.divider]}>
-            <View style={st.num}><Text style={st.numText}>{it.n}</Text></View>
-            <View style={{ flex: 1 }}>
-              <Text style={st.rowTitle}>{it.title}</Text>
-              <Text style={st.rowSub}>{it.sub}</Text>
-            </View>
-            {it.badge ? <View style={st.badge}><Text style={st.badgeText}>{it.badge}</Text></View> : null}
-            <Text style={st.chev}>›</Text>
-          </Pressy>
-        ))}
-      </Card>
+      <Animated.View entering={FadeIn.duration(400)} style={{ alignItems: 'center' }}>
+        <Pressy scaleTo={0.98} onPress={() => router.navigate('/profile')}>
+          <Figure figure={figureFor(me.self)} size={210} />
+        </Pressy>
+      </Animated.View>
+      <OthersThink />
       <Pressable onPress={reset}><Text style={st.reset}>Recomeçar demo</Text></Pressable>
     </Screen>
   );
 }
 
+function greeting() {
+  const h = new Date().getHours();
+  return h < 6 ? 'Boa noite' : h < 13 ? 'Bom dia' : h < 20 ? 'Boa tarde' : 'Boa noite';
+}
+
+/** "O que pensam de ti": barras por tag, agrupadas por Cabeça · Braço · Mão (MighTs recebidos, exceto recusados). */
+function OthersThink() {
+  const mights = useMight((s) => s.mights);
+  const got = received(mights).filter((m) => m.status !== 'recusado');
+  const [sel, setSel] = useState<{ dim: Dim; id: string } | null>(null);
+
+  if (!got.length) {
+    return (
+      <Card style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
+        <Text style={st.cardTitle}>O que pensam de ti</Text>
+        <P muted style={{ textAlign: 'center' }}>Ainda ninguém te deu um MighT. Pede a quem te conhece.</P>
+        <Button title="Pede MighT" variant="secondary" onPress={() => router.push('/ask')} style={{ alignSelf: 'stretch' }} />
+      </Card>
+    );
+  }
+
+  const groups = DIMS.map((dim) => {
+    const count: Record<string, number> = {};
+    got.forEach((m) => { count[m.tags[dim]] = (count[m.tags[dim]] ?? 0) + 1; });
+    const bars = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    return { dim, bars };
+  });
+  const max = Math.max(...groups.flatMap((g) => g.bars.map((b) => b[1])));
+  const cur = sel ?? (() => {
+    const best = groups.flatMap((g) => g.bars.map(([id, n]) => ({ dim: g.dim, id, n }))).sort((a, b) => b.n - a.n)[0];
+    return { dim: best.dim, id: best.id };
+  })();
+  const curN = groups.find((g) => g.dim === cur.dim)?.bars.find((b) => b[0] === cur.id)?.[1] ?? 0;
+
+  return (
+    <Card style={{ gap: 14 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <Text style={st.cardTitle}>O que pensam de ti</Text>
+        <Text style={st.cardSub}>{got.length} MighT{got.length > 1 ? 's' : ''}</Text>
+      </View>
+      <View>
+        <Text style={st.selWord}>{label(cur.id)}</Text>
+        <Text style={st.cardSub}>{DIM_INFO[cur.dim].part} · {curN} de {got.length} pessoa{got.length > 1 ? 's' : ''}</Text>
+      </View>
+      <View style={st.chart}>
+        {groups.map((g) => (
+          <View key={g.dim} style={st.group}>
+            <View style={st.bars}>
+              {g.bars.map(([id, n]) => {
+                const on = cur.dim === g.dim && cur.id === id;
+                return (
+                  <Pressable key={id} onPressIn={() => { tap(); setSel({ dim: g.dim, id }); }} hitSlop={4} style={st.barHit}>
+                    <GrowBar h={12 + (n / max) * 96} color={DIM_COLOR[g.dim]} dim={!on} />
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={st.groupLabel}>{DIM_INFO[g.dim].part}</Text>
+          </View>
+        ))}
+      </View>
+    </Card>
+  );
+}
+
+function GrowBar({ h, color, dim }: { h: number; color: string; dim: boolean }) {
+  const v = useSharedValue(0);
+  useEffect(() => { v.value = withTiming(h, { duration: 380, easing: Easing.out(Easing.cubic) }); }, [h]);
+  const a = useAnimatedStyle(() => ({ height: v.value }));
+  return <Animated.View style={[st.bar, { backgroundColor: color, opacity: dim ? 0.35 : 1 }, a]} />;
+}
+
 const st = StyleSheet.create({
   hello: { fontWeight: '400', fontSize: 17, color: C.muted },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13, paddingHorizontal: 16, backgroundColor: C.surface },
-  divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.separator },
-  num: { width: 32, height: 32, borderRadius: 9, borderCurve: 'continuous', backgroundColor: C.mint100, alignItems: 'center', justifyContent: 'center' },
-  numText: { fontWeight: '700', color: C.tealInk, fontSize: 13 },
-  rowTitle: { fontWeight: '500', fontSize: 17, color: C.dark, letterSpacing: -0.3 },
-  rowSub: { fontWeight: '400', fontSize: 14, color: C.muted, marginTop: 1 },
-  badge: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: C.teal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  badgeText: { fontWeight: '700', color: C.onTeal, fontSize: 13 },
-  chev: { fontSize: 24, color: '#C4C4C7', fontWeight: '300' },
+  cardTitle: { fontWeight: '600', fontSize: 17, color: C.dark, letterSpacing: -0.3 },
+  cardSub: { fontWeight: '400', fontSize: 13, color: C.muted },
+  selWord: { fontWeight: '700', fontSize: 24, letterSpacing: -0.5, color: C.dark },
+  chart: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+  group: { flex: 1, alignItems: 'center', gap: 8 },
+  bars: { height: 110, flexDirection: 'row', alignItems: 'flex-end', gap: 6 },
+  barHit: { justifyContent: 'flex-end', height: 110 },
+  bar: { width: 14, borderRadius: 7 },
+  groupLabel: { fontWeight: '500', fontSize: 12, color: C.muted },
   reset: { fontWeight: '400', color: C.muted, textAlign: 'center', fontSize: 13 },
 });

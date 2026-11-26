@@ -21,7 +21,7 @@ export const TABS: Tab[] = [
   { href: '/roles', label: 'Funções', icon: 'briefcase', on: 'briefcase.fill', web: '▤', match: ['/roles'] },
 ];
 
-const spring = LinearTransition.duration(220).easing(Easing.out(Easing.quad));
+const spring = LinearTransition.duration(180).easing(Easing.out(Easing.quad));
 
 export function TabBar() {
   const visible = useTabBarVisible();
@@ -37,11 +37,11 @@ export function TabBar() {
         {TABS.map((t) => {
           const active = t.match.includes(path);
           return (
-            <Pressy key={t.label} scaleTo={0.97} onPress={() => { if (!active || path !== t.href) router.navigate(t.href); }}>
+            <Pressy key={t.label} scaleTo={0.94} instant onPress={() => { if (!active || path !== t.href) router.navigate(t.href); }}>
               <Animated.View layout={spring} style={[st.item, active && st.itemOn]}>
                 <Icon tab={t} active={active} />
                 {active ? (
-                  <Animated.Text entering={FadeIn.duration(180).delay(80)} exiting={FadeOut.duration(60)} numberOfLines={1} style={st.label}>
+                  <Animated.Text entering={FadeIn.duration(160)} exiting={FadeOut.duration(60)} numberOfLines={1} style={st.label}>
                     {t.label}
                   </Animated.Text>
                 ) : null}
@@ -56,7 +56,7 @@ export function TabBar() {
 }
 
 function Icon({ tab, active }: { tab: Tab; active: boolean }) {
-  const color = active ? C.onTeal : 'rgba(255,255,255,0.62)';
+  const color = active ? C.onTeal : '#5E8F92';
   const fallback = <Text style={{ fontSize: 19, color, width: 22, textAlign: 'center' }}>{tab.web}</Text>;
   if (Platform.OS !== 'ios') return fallback;
   return <SymbolView name={(active ? tab.on : tab.icon) as any} size={21} tintColor={color} weight="semibold" fallback={fallback} />;
@@ -66,11 +66,11 @@ const st = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   pill: {
     flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6, borderRadius: 999, borderCurve: 'continuous',
-    backgroundColor: '#0B0C0E',
-    shadowColor: '#04363A', shadowOpacity: 0.28, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 12,
+    backgroundColor: 'rgba(255,255,255,0.96)', borderWidth: 1, borderColor: C.mint100,
+    shadowColor: '#04363A', shadowOpacity: 0.12, shadowRadius: 20, shadowOffset: { width: 0, height: 8 }, elevation: 10,
   },
   item: { height: 48, minWidth: 48, paddingHorizontal: 13, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   itemOn: { backgroundColor: C.teal },
   label: { color: C.onTeal, fontWeight: '600', fontSize: 14, letterSpacing: -0.2 },
-  dot: { position: 'absolute', top: 10, right: 11, width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal, borderWidth: 1.5, borderColor: '#0B0C0E' },
+  dot: { position: 'absolute', top: 10, right: 11, width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal, borderWidth: 1.5, borderColor: '#FFFFFF' },
 });
