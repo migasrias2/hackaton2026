@@ -1,4 +1,13 @@
-import { ARTISTS, ORIGINALS, findTag, type Dimension } from "./data";
+import {
+  ARTISTS,
+  NETWORK_QUESTIONS,
+  NETWORK_ROLES,
+  ORIGINALS,
+  findTag,
+  type Answer,
+  type Dimension,
+  type NetworkId,
+} from "./data";
 
 /**
  * Shared contract for the rest of the app (steps 2–6).
@@ -6,7 +15,13 @@ import { ARTISTS, ORIGINALS, findTag, type Dimension } from "./data";
  */
 export interface SelfMight {
   firstName: string;
+  role?: string; // "Função / Papel" (optional)
+  team?: string; // "Grupo / Equipa" (optional)
   tags: Record<Dimension, string>; // personality → head, power → body, character → arms
+  network: {
+    answers: Partial<Record<NetworkId, Answer>>; // the 5 social-graph questions
+    role: NetworkId; // derived with networkRole()
+  };
   artistId: string;
   figure: string; // image url under /public
   tagline: string; // first-person line, e.g. "I sense with my inner eye"
@@ -15,6 +30,8 @@ export interface SelfMight {
   createdAt: string; // ISO date
   timeToCreateMs: number; // from "Get started" to reveal
 }
+
+export type CopyInput = Pick<SelfMight, "firstName" | "role" | "team" | "tags" | "network">;
 
 const KEY = "might:self";
 
@@ -38,25 +55,37 @@ export function figureFor(artistId: string, tags: Record<Dimension, string>) {
   return ORIGINALS[h % ORIGINALS.length];
 }
 
-export function libraryCopy(tags: Record<Dimension, string>) {
+export function libraryCopy({ tags, network }: Pick<CopyInput, "tags" | "network">) {
   const tagline = findTag("personality", tags.personality)?.tagline ?? "I always create a way!";
-  const bio = `${tags.personality} at heart, a natural ${tags.power.toLowerCase()}, guided by ${tags.character.toLowerCase()}.`;
+  const bio = `${tags.personality} at heart, a natural ${tags.power.toLowerCase()}, guided by ${tags.character.toLowerCase()}. ${
+    NETWORK_ROLES[network.role].line
+  }`;
   return { tagline, bio };
 }
 
 /** Asks the dev server (Gemini) for a tagline; never throws — falls back to the word library. */
-export async function generateCopy(firstName: string, tags: Record<Dimension, string>) {
+export async function generateCopy(input: CopyInput) {
+  const { tags, network } = input;
   try {
     const res = await fetch("/api/tagline", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        firstName,
+        firstName: input.firstName,
+        role: input.role,
+        team: input.team,
         tags,
         examples: {
           personality: findTag("personality", tags.personality)?.tagline,
           power: findTag("power", tags.power)?.tagline,
           character: findTag("character", tags.character)?.tagline,
+        },
+        network: {
+          role: NETWORK_ROLES[network.role].name,
+          answers: NETWORK_QUESTIONS.filter((q) => network.answers[q.id]).map((q) => ({
+            question: q.question,
+            answer: network.answers[q.id],
+          })),
         },
       }),
       signal: AbortSignal.timeout(12000),
@@ -64,9 +93,9 @@ export async function generateCopy(firstName: string, tags: Record<Dimension, st
     if (!res.ok) throw new Error(String(res.status));
     const data = (await res.json()) as { tagline?: string; bio?: string };
     if (!data.tagline) throw new Error("empty");
-    return { tagline: data.tagline, bio: data.bio || libraryCopy(tags).bio, source: "ai" as const };
+    return { tagline: data.tagline, bio: data.bio || libraryCopy(input).bio, source: "ai" as const };
   } catch {
-    return { ...libraryCopy(tags), source: "library" as const };
+    return { ...libraryCopy(input), source: "library" as const };
   }
 }
 

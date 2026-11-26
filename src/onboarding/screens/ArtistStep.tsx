@@ -53,7 +53,7 @@ export function ArtistStep({ tags, value, onBack, onChange, onNext }: Props) {
 
   return (
     <div className="m-screen m-bg-blue m-artist">
-      <TopBar onBack={onBack} step={3} />
+      <TopBar onBack={onBack} step={5} total={5} />
       <div className="m-artist__head">
         <p className="m-eyebrow">Last touch</p>
         <h2 className="m-title m-title--sm">Choose your artist</h2>

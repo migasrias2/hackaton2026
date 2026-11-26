@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { Lock, RefreshCw, Sparkles, Timer } from "lucide-react";
+import { Lock, Network, RefreshCw, Sparkles, Timer } from "lucide-react";
+import { NETWORK_ROLES } from "../data";
 import type { SelfMight } from "../might";
 import { Button } from "../ui";
 
@@ -56,6 +57,14 @@ export function Reveal({ might, onRegenerate, onEdit, onContinue }: Props) {
         <span>{might.tags.power}</span>
         <span>{might.tags.character}</span>
       </motion.div>
+
+      {might.network && (
+        <motion.div className="m-netrole" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={s(0.55)}>
+          <Network size={14} strokeWidth={2.4} />
+          <b>{NETWORK_ROLES[might.network.role].name}</b>
+          <span>{NETWORK_ROLES[might.network.role].line}</span>
+        </motion.div>
+      )}
 
       <motion.div className="m-reveal__copy" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={s(0.6)}>
         <AnimatePresence mode="wait">

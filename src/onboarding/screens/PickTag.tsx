@@ -26,7 +26,7 @@ export function PickTag({ dimension, value, chosen, onBack, onPick, onNext }: Pr
 
   return (
     <div className="m-screen m-bg-light m-pick">
-      <TopBar onBack={onBack} step={step} />
+      <TopBar onBack={onBack} step={step} total={5} />
 
       <div className="m-pick__head">
         <div>
@@ -108,7 +108,7 @@ export function PickTag({ dimension, value, chosen, onBack, onPick, onNext }: Pr
           )}
         </AnimatePresence>
         <Button variant="brand" onClick={onNext} disabled={!value}>
-          {step < 3 ? "Next" : "Choose your artist"}
+          Next
         </Button>
       </div>
     </div>

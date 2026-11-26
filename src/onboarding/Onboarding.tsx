@@ -2,38 +2,30 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeviceFrame } from "@/components/DeviceFrame";
-import type { Dimension } from "./data";
+import { networkRole, type Answer, type Dimension, type NetworkId } from "./data";
 import { figureFor, generateCopy, saveSelfMight, type SelfMight } from "./might";
 import { ArtistStep } from "./screens/ArtistStep";
+import { ConnectStep } from "./screens/ConnectStep";
 import { Generating } from "./screens/Generating";
 import { Intro } from "./screens/Intro";
-import { NameStep } from "./screens/NameStep";
+import { NameStep, type NameInfo } from "./screens/NameStep";
 import { PickTag } from "./screens/PickTag";
 import { Reveal } from "./screens/Reveal";
 import { Welcome } from "./screens/Welcome";
 import "./onboarding.css";
 
-const STEPS = ["welcome", "intro", "name", "personality", "power", "character", "artist", "generating", "reveal"] as const;
+const STEPS = ["welcome", "intro", "name", "personality", "power", "character", "connect", "artist", "generating", "reveal"] as const;
 type Step = (typeof STEPS)[number];
 
-const TONE: Record<Step, "dark" | "light"> = {
-  welcome: "dark",
-  intro: "dark",
-  name: "dark",
-  personality: "dark",
-  power: "dark",
-  character: "dark",
-  artist: "dark",
-  generating: "light",
-  reveal: "light",
-};
+const LIGHT_STATUS: Step[] = ["generating", "reveal"];
 
 export default function Onboarding() {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
   const [[step, dir], setNav] = useState<[Step, number]>(["welcome", 1]);
-  const [firstName, setFirstName] = useState("");
+  const [info, setInfo] = useState<NameInfo>({ firstName: "", role: "", team: "" });
   const [tags, setTags] = useState<Partial<Record<Dimension, string>>>({});
+  const [answers, setAnswers] = useState<Partial<Record<NetworkId, Answer>>>({});
   const [artistId, setArtistId] = useState("originals");
   const [might, setMight] = useState<SelfMight | null>(null);
   const startedAt = useRef(0);
@@ -43,10 +35,16 @@ export default function Onboarding() {
   const full = tags as Record<Dimension, string>;
 
   const build = async () => {
-    const copy = await generateCopy(firstName, full);
-    pending.current = {
-      firstName,
+    const base = {
+      firstName: info.firstName,
+      role: info.role || undefined,
+      team: info.team || undefined,
       tags: full,
+      network: { answers, role: networkRole(answers) },
+    };
+    const copy = await generateCopy(base);
+    pending.current = {
+      ...base,
       artistId,
       figure: figureFor(artistId, full),
       ...copy,
@@ -71,10 +69,10 @@ export default function Onboarding() {
       case "name":
         return (
           <NameStep
-            initial={firstName}
+            initial={info}
             onBack={() => go("intro")}
-            onNext={(n) => {
-              setFirstName(n);
+            onNext={(v) => {
+              setInfo(v);
               go("personality");
             }}
           />
@@ -82,7 +80,7 @@ export default function Onboarding() {
       case "personality":
       case "power":
       case "character": {
-        const order: Step[] = ["name", "personality", "power", "character", "artist"];
+        const order: Step[] = ["name", "personality", "power", "character", "connect"];
         const i = order.indexOf(step);
         return (
           <PickTag
@@ -95,8 +93,17 @@ export default function Onboarding() {
           />
         );
       }
+      case "connect":
+        return (
+          <ConnectStep
+            answers={answers}
+            onAnswer={(id, a) => setAnswers((s) => ({ ...s, [id]: a }))}
+            onBack={() => go("character")}
+            onDone={() => go("artist")}
+          />
+        );
       case "artist":
-        return <ArtistStep tags={full} value={artistId} onBack={() => go("character")} onChange={setArtistId} onNext={() => go("generating")} />;
+        return <ArtistStep tags={full} value={artistId} onBack={() => go("connect")} onChange={setArtistId} onNext={() => go("generating")} />;
       case "generating":
         return (
           <Generating
@@ -116,7 +123,7 @@ export default function Onboarding() {
           <Reveal
             might={might}
             onRegenerate={async () => {
-              const copy = await generateCopy(might.firstName, might.tags);
+              const copy = await generateCopy(might);
               const next = { ...might, ...copy };
               saveSelfMight(next);
               setMight(next);
@@ -137,7 +144,7 @@ export default function Onboarding() {
   };
 
   return (
-    <DeviceFrame tone={TONE[step]}>
+    <DeviceFrame tone={LIGHT_STATUS.includes(step) ? "light" : "dark"}>
       <AnimatePresence initial={false} custom={dir}>
         <motion.div
           key={step}

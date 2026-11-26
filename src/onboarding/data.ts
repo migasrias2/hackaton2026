@@ -105,6 +105,43 @@ export const DIMENSION_ORDER: Dimension[] = ["personality", "power", "character"
 export const findTag = (d: Dimension, label: string) =>
   DIMENSIONS[d].tags.find((x) => x.label === label);
 
+// Source: "Perguntas de entrada do app" — Matriz Reduzida: 5 tags do grafo social (Sim / Talvez / Não).
+export type Answer = "yes" | "maybe" | "no";
+export type NetworkId = "centrality" | "bridge" | "initiative" | "reciprocity" | "silo";
+
+export const NETWORK_QUESTIONS: { id: NetworkId; tag: string; question: string }[] = [
+  { id: "centrality", tag: "Centrality & Reference", question: "Do people often come to you with questions or for help?" },
+  { id: "bridge", tag: "Bridge & Cross-team", question: "Do you regularly talk with people from other groups and teams?" },
+  { id: "initiative", tag: "Initiative & Outreach", question: "Do you usually take the initiative to reach out and involve others?" },
+  { id: "reciprocity", tag: "Reciprocity & Facilitation", question: "Do you always reply when contacted, and help teams get aligned?" },
+  { id: "silo", tag: "Silo & Observation", question: "Do you mostly stick to your own group, or prefer to stay low-key?" },
+];
+
+export const NETWORK_ROLES: Record<NetworkId, { name: string; line: string }> = {
+  centrality: { name: "The Go-To", line: "People come to you for answers." },
+  bridge: { name: "The Bridge", line: "You connect teams that rarely talk." },
+  initiative: { name: "The Spark", line: "You reach out first and pull people in." },
+  reciprocity: { name: "The Facilitator", line: "You answer, align and keep teams in sync." },
+  silo: { name: "The Observer", line: "You go deep with your circle and watch before you act." },
+};
+
+const SCORE: Record<Answer, number> = { yes: 2, maybe: 1, no: 0 };
+
+/** Highest-scoring connector trait wins (ties → question order); the Observer only wins outright. */
+export function networkRole(answers: Partial<Record<NetworkId, Answer>>): NetworkId {
+  const order: NetworkId[] = ["centrality", "bridge", "initiative", "reciprocity"];
+  let best: NetworkId = "reciprocity";
+  let top = -1;
+  for (const id of order) {
+    const s = SCORE[answers[id] ?? "no"];
+    if (s > top) {
+      top = s;
+      best = id;
+    }
+  }
+  return SCORE[answers.silo ?? "no"] > top ? "silo" : best;
+}
+
 // Source: CASE ASSETS/05. Figure Art Kit. Each figure keeps a single artist's style.
 export interface Artist {
   id: string;
