@@ -1,71 +1,36 @@
-# React + Vite + shadcn/ui Template
+# MighT · MVP (Expo)
 
-A modern web application template using React, TypeScript, Vite, shadcn/ui components, and Tailwind CSS.
+App mobile-first em Expo (SDK 58, expo-router, TypeScript, Zustand). Dados fictícios, tudo local (sem backend).
 
-## Technologies
-
-This template includes:
-
-- [Vite](https://vitejs.dev/) - Next-generation frontend tooling
-- [React](https://reactjs.org/) - A JavaScript library for building user interfaces
-- [TypeScript](https://www.typescriptlang.org/) - JavaScript with syntax for types
-- [shadcn/ui](https://ui.shadcn.com/) - Re-usable components built with Radix UI and Tailwind CSS
-- [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework
-
-## Getting Started
-
-### STEP 1 Option A (Recommended) ⭐
-Use GitHub's template feature to create your project:
-1. Click the "Use this template" button above
-2. Select "Create a new repository"
-3. Choose your repository name and settings
-4. Click "Create repository from template"
-
-### STEP 1 Option B (Alternative)
-If you prefer to start manually:
-```sh
-# Clone the template repository
-git clone https://github.com/bobby-io/react-vite-shadcn-template
-cd react-vite-shadcn-template
-
-# Remove the existing git history
-rm -rf .git
-
-# Initialize as a fresh git repository
-git init
-```
-
-### STEP 2 - Next Steps (Required)
-1. Install dependencies:
-```sh
+## Correr
+```bash
 npm install
+npx expo start          # QR code → Expo Go no telemóvel
+npx expo start --web    # browser
+npm run typecheck
 ```
 
-2. Start the development server:
-```sh
-npm run dev
-```
+## Fluxo (passos 1–6)
+| Passo | Ecrã | Ficheiro | Dono |
+|---|---|---|---|
+| — | Início / hub | `src/app/index.tsx` | Integrador (Miguel) |
+| 1 | Cria o teu MighT | `src/app/create.tsx` | Pessoa 2 |
+| 2A | Manda MighT | `src/app/send.tsx` | Pessoa 3 |
+| 2B | Pede MighT (link) | `src/app/ask.tsx` | Pessoa 3 |
+| 2→3 | Recebidos (aceitar/recusar, 3 = desbloqueia) | `src/app/inbox.tsx` | Pessoa 3 |
+| 3 | All MighT (Self vs All, pesos) | `src/app/profile.tsx` | Pessoa 3 |
+| 4 | MighT Card (PNG retrato/LinkedIn) | `src/app/card.tsx` | Pessoa 4 |
+| 5 | Pessoas como tu | `src/app/discover.tsx` | Integrador |
+| 6 | Funções e percursos | `src/app/roles.tsx` | Integrador |
 
-This will give you a fresh start with your own repository while maintaining all the template's features and configurations.
+## Partilhado (avisar a equipa antes de mudar)
+- `src/data/types.ts` — **contrato de dados**. Não mudar sem avisar.
+- `src/lib/logic.ts` — regras: desbloqueio = 3 aceites; peso = contagem ÷ total na dimensão; semelhança = média de Σ min(pesoA, pesoB); encaixe = soma dos pesos das tags da função.
+- `src/store/useMight.ts` — estado (persistido). Recíprocos chegam 5 s depois; botão "Receber 3 MighTs da sala" para a demo.
+- `src/data/tags.ts`, `roles.ts`, `seed.ts` — conteúdo (Pessoa 5). Tags provisórias.
+- `src/theme.ts`, `src/components/` e `assets/` — design (Pessoa 4 / logos). Trocar cores, fontes, logo (`src/components/logoBlack.ts`, `logoWhite.ts`) e figuras aqui.
 
-## Development
-
-- Run development server: `npm run dev`
-- Build for production: `npm run build`
-- Preview production build: `npm run preview`
-
-## Customization
-
-- Update the configuration in `vite.config.ts` to customize your build
-- Modify theme settings in `tailwind.config.js`
-- Add or modify components in the `src/components` directory
-- Update global styles in `src/index.css`
-
-## Deployment
-
-This template can be deployed to various platforms:
-
-- [Vercel](https://vercel.com/)
-- [Netlify](https://www.netlify.com/)
-- [GitHub Pages](https://pages.github.com/)
-- Any other platform that supports static site hosting
+## Regras
+- Um ecrã por pessoa → poucos conflitos. `git pull` antes de `git push`.
+- Linguagem neutra em género (ex.: "quem te conhece te vê…").
+- Nenhum beco sem saída: ecrã bloqueado mostra sempre o próximo passo.
