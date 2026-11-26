@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { router, usePathname } from 'expo-router';
 import { Children, ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native';
-import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TAB_ROOTS, TAB_SPACE, useTabBarVisible } from '@/components/tabs';
@@ -13,17 +13,17 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const tap = () => { if (Platform.OS !== 'web') Haptics.selectionAsync().catch(() => {}); };
 
-/** Botão com "mola" ao carregar (escala) + vibração leve. Base de tudo o que é tocável. */
-export function Pressy({ children, onPress, style, disabled, scaleTo = 0.96 }: {
+/** Toque discreto: ligeira redução de escala e opacidade + vibração leve. */
+export function Pressy({ children, onPress, style, disabled, scaleTo = 0.98 }: {
   children: ReactNode; onPress?: () => void; style?: any; disabled?: boolean; scaleTo?: number;
 }) {
   const sc = useSharedValue(1);
-  const anim = useAnimatedStyle(() => ({ transform: [{ scale: sc.value }] }));
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: sc.value }], opacity: 1 - (1 - sc.value) * 8 }));
   return (
     <AnimatedPressable
       disabled={disabled}
-      onPressIn={() => { sc.value = withSpring(scaleTo, { damping: 18, stiffness: 420 }); }}
-      onPressOut={() => { sc.value = withSpring(1, { damping: 14, stiffness: 260 }); }}
+      onPressIn={() => { sc.value = withTiming(scaleTo, { duration: 90 }); }}
+      onPressOut={() => { sc.value = withTiming(1, { duration: 160 }); }}
       onPress={() => { tap(); onPress?.(); }}
       style={[style, anim]}>
       {children}
@@ -43,7 +43,7 @@ function nice(t: string) {
     .replace(/\blinkedin\b/gi, 'LinkedIn');
 }
 
-const enter = (i: number) => FadeInDown.delay(Math.min(i, 8) * 45).duration(420).easing(Easing.out(Easing.cubic));
+const enter = (i: number) => FadeIn.delay(Math.min(i, 6) * 25).duration(260).easing(Easing.out(Easing.quad));
 
 export function Screen({ children, back = true, step, footer }: {
   children: ReactNode; bg?: string; back?: boolean; step?: string; footer?: ReactNode;
@@ -89,7 +89,7 @@ export function Button({ title, onPress, variant = 'primary', disabled, style }:
   title: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'ghost'; disabled?: boolean; style?: ViewStyle;
 }) {
   return (
-    <Pressy onPress={onPress} disabled={disabled} scaleTo={variant === 'ghost' ? 0.98 : 0.96}
+    <Pressy onPress={onPress} disabled={disabled} scaleTo={variant === 'ghost' ? 0.99 : 0.98}
       style={[s.btn, s[variant], disabled && { opacity: 0.35 }, style]}>
       <Text style={[s.btnText, variant !== 'primary' && { color: C.tealInk }]}>{nice(title)}</Text>
     </Pressy>

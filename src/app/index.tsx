@@ -1,11 +1,12 @@
 // Início: boas-vindas (sem MighT) ou hub com os 6 passos. Dono: Integrador.
 import { Href, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Figure, Logo, TagParts } from '@/components/might';
 import { Button, Card, H1, P, Pressy, Screen } from '@/components/ui';
 import { accepted, isUnlocked, pending, sent, UNLOCK_AT } from '@/lib/logic';
+import { figureFor } from '@/lib/figure';
 import { useMight } from '@/store/useMight';
 import { C, F } from '@/theme';
 
@@ -53,7 +54,7 @@ export default function Home() {
         <Text style={st.hello}>Olá,</Text>
         <H1>{me.name}</H1>
         <Button title="Ver All MighT" variant="secondary" onPress={() => router.push('/profile')} style={{ height: 38 }} />
-        <Animated.View entering={ZoomIn.springify().damping(14)}><Figure figure={me.figure} size={220} /></Animated.View>
+        <Animated.View entering={FadeIn.duration(400)}><Figure figure={figureFor(me.self)} size={220} /></Animated.View>
         <TagParts tags={me.self} />
         {me.tagline ? <P style={{ textAlign: 'center', fontStyle: 'italic' }}>“{me.tagline}”</P> : null}
       </View>

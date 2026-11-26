@@ -7,6 +7,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { Figure, TagGrid, TagParts } from '@/components/might';
 import { Button, Caps, H1, Input, P, Screen } from '@/components/ui';
 import { DIM_INFO, DIMS, TagTriple } from '@/data/types';
+import { figureFor } from '@/lib/figure';
 import { useMight } from '@/store/useMight';
 import { C } from '@/theme';
 
@@ -65,7 +66,7 @@ export default function Create() {
       </>}>
         <View style={{ alignItems: 'center', gap: 12 }}>
           <Caps>O teu Self MighT{secs ? ` · criado em ${secs} s` : ''}</Caps>
-          <Figure figure={me.figure} size={260} />
+          <Figure figure={me.self ? figureFor(me.self) : null} size={260} />
           <H1 style={{ textAlign: 'center', fontSize: 22 }}>“{me.tagline}”</H1>
           <TagParts tags={me.self} />
           <P muted style={{ textAlign: 'center' }}>

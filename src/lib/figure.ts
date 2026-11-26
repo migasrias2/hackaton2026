@@ -3,26 +3,41 @@
 import { label } from '@/data/tags';
 import { TagTriple } from '@/data/types';
 
+// Personagens do Rodrigo (assets/emotes/personagens, reduzidas a 512 px).
 export const FIGURES = {
-  hippie: require('../../assets/figures/hippie.png'),
-  'pop-art': require('../../assets/figures/pop-art.png'),
-  'art-deco': require('../../assets/figures/art-deco.png'),
-  'air-force': require('../../assets/figures/air-force.png'),
-  matrioska: require('../../assets/figures/matrioska.png'),
-  modrian: require('../../assets/figures/modrian.png'),
-  'mystic-pink': require('../../assets/figures/mystic-pink.png'),
-  'retro-mandala': require('../../assets/figures/retro-mandala.png'),
-  surf: require('../../assets/figures/surf.png'),
-  'diogo-machado': require('../../assets/figures/diogo-machado.png'),
+  alegria: require('../../assets/figures/alegria.png'),
+  amor: require('../../assets/figures/amor.png'),
+  autoconfianca: require('../../assets/figures/autoconfianca.png'),
+  entusiasmo: require('../../assets/figures/entusiasmo.png'),
+  frieza: require('../../assets/figures/frieza.png'),
+  nojo: require('../../assets/figures/nojo.png'),
+  raiva: require('../../assets/figures/raiva.png'),
+  serenidade: require('../../assets/figures/serenidade.png'),
+  tristeza: require('../../assets/figures/tristeza.png'),
 } as const;
 export type FigureKey = keyof typeof FIGURES;
-export const FIGURE_BASE = require('../../assets/figures/base.png');
+export const FIGURE_BASE = FIGURES.alegria;
+
+/** A figura sai da tag de Personalidade (a "cabeça") escolhida. */
+const BY_PERSONALITY: Record<string, FigureKey> = {
+  'Adaptável': 'serenidade', 'Paciente': 'serenidade',
+  'Audaz': 'autoconfianca', 'Perspicaz': 'autoconfianca',
+  'Entusiasta': 'entusiasmo', 'Versátil': 'entusiasmo',
+  'Exigente': 'raiva', 'Persistente': 'raiva',
+  'Idealista': 'amor',
+  'Independente': 'frieza', 'Inteligente': 'frieza',
+  'Irreverente': 'nojo',
+  'Otimista': 'alegria', 'Sociável': 'alegria',
+  'Sensível': 'tristeza',
+};
 
 const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 
 export function figureFor(t: TagTriple): FigureKey {
+  const hit = BY_PERSONALITY[label(t.personalidade)];
+  if (hit) return hit;
   const keys = Object.keys(FIGURES) as FigureKey[];
-  return keys[hash(t.personalidade + t.poder + t.caracter) % keys.length];
+  return keys[hash(t.personalidade) % keys.length];
 }
 
 export function taglineFor(t: TagTriple): string {

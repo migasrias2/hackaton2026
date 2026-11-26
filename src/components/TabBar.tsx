@@ -2,7 +2,7 @@
 import { SymbolView } from 'expo-symbols';
 import { Href, router, usePathname } from 'expo-router';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, LinearTransition, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTabBarVisible } from '@/components/tabs';
@@ -21,7 +21,7 @@ export const TABS: Tab[] = [
   { href: '/roles', label: 'Funções', icon: 'briefcase', on: 'briefcase.fill', web: '▤', match: ['/roles'] },
 ];
 
-const spring = LinearTransition.springify().damping(18).stiffness(220);
+const spring = LinearTransition.duration(220).easing(Easing.out(Easing.quad));
 
 export function TabBar() {
   const visible = useTabBarVisible();
@@ -31,17 +31,17 @@ export function TabBar() {
   if (!visible) return null;
 
   return (
-    <Animated.View pointerEvents="box-none" entering={SlideInDown.springify().damping(16)} exiting={SlideOutDown}
+    <Animated.View pointerEvents="box-none" entering={FadeIn.duration(250)} exiting={FadeOut.duration(150)}
       style={[st.wrap, { bottom: Math.max(insets.bottom - 6, 12) }]}>
       <Animated.View layout={spring} style={st.pill}>
         {TABS.map((t) => {
           const active = t.match.includes(path);
           return (
-            <Pressy key={t.label} scaleTo={0.9} onPress={() => { if (!active || path !== t.href) router.navigate(t.href); }}>
+            <Pressy key={t.label} scaleTo={0.97} onPress={() => { if (!active || path !== t.href) router.navigate(t.href); }}>
               <Animated.View layout={spring} style={[st.item, active && st.itemOn]}>
                 <Icon tab={t} active={active} />
                 {active ? (
-                  <Animated.Text entering={FadeIn.duration(220).delay(60)} exiting={FadeOut.duration(80)} numberOfLines={1} style={st.label}>
+                  <Animated.Text entering={FadeIn.duration(180).delay(80)} exiting={FadeOut.duration(60)} numberOfLines={1} style={st.label}>
                     {t.label}
                   </Animated.Text>
                 ) : null}
